@@ -10,7 +10,7 @@
   <arg name="depth_info_topic" default="/realsense/depth/camera_info" />
   <arg name="imu_topic" default="/interpolate_imu/imu" />
 
-  <node pkg="simulation" type="unity_ros" name="unity_ros" >
+  <node pkg="simulation" type="unity_ros" name="unity_ros" output="screen">
     <remap from="~Quadrotor/Sensors/IMU/pose" to="$(arg pose_topic)" />
     <remap from="~Quadrotor/Sensors/IMU/twist" to="/true_twist" />
     <remap from="~Quadrotor/Sensors/DepthCamera/image_raw" to="$(arg depth_image_topic)" />

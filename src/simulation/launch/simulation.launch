@@ -18,7 +18,7 @@
     <arg name="depth_info_topic" value="$(arg depth_info_topic)" />
   </include>
 
-  <node name="Simulation" pkg="simulation" type="Simulation.x86_64"/>
+  <node name="Simulation" pkg="simulation" type="Simulation.x86_64" output="screen"/>
 
   <node pkg="simulation"
         type="state_estimate_corruptor_node"
