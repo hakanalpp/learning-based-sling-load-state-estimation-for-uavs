@@ -28,3 +28,41 @@ Thumbs.db
 Simulation_Data
 Simulation.x86_64
 UnityPlayer.so
+build
+
+#------------------------------------------------------
+# Unity: ignore all Assets except code,
+# Assets
+# Global ignore
+Assets/*
+*.terrainlayer*
+*.cs.meta
+*.3DS*
+*.prefab*
+*.meta
+*.mat
+*.renderTexture
+
+# Scripts folder
+!Assets/Scripts/
+!Assets/Scripts/**.cs
+
+# CrossPlatformInput
+!Assets/CrossPlatformInput/Scripts/
+!Assets/CrossPlatformInput/Scripts/**.cs
+
+# Quadrotor
+!Assets/Quadrotor/
+!Assets/Quadrotor/Scripts/**.cs
+
+# FirstPersonCharacter
+!Assets/Characters/FirstPersonCharacter/Scripts/
+!Assets/Characters/FirstPersonCharacter/Scripts/**.cs
+
+# RollerBall
+!Assets/Characters/RollerBall/Scripts/
+!Assets/Characters/RollerBall/Scripts/**.cs
+
+# ThirdPersonCharacter
+!Assets/Characters/ThirdPersonCharacter/Scripts/
+!Assets/Characters/ThirdPersonCharacter/Scripts/**.cs
