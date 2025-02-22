@@ -24,7 +24,7 @@ Thumbs.db
 # Editor / IDE files
 .vscode/
 .idea/
-
+*.code-workspace
 Simulation_Data
 Simulation.x86_64
 UnityPlayer.so
