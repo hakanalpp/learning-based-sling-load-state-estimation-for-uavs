@@ -19,6 +19,7 @@ public:
                             double time_offset) override {
     auto img = ParseImage(stream_reader);
     PublishImage(header, img, time_offset);
+    return true;
   }
 
   float GetFieldOfView() const {

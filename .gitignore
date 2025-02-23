@@ -29,6 +29,7 @@ Simulation_Data
 Simulation.x86_64
 UnityPlayer.so
 build
+**/__pycache__
 
 #------------------------------------------------------
 # Unity: ignore all Assets except code,

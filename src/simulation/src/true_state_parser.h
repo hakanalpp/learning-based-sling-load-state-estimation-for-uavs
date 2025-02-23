@@ -85,6 +85,7 @@ public:
     tf->transform.rotation.w = pose_msg.pose.orientation.w;
 
     tf_broadcaster.sendTransform(*tf);
+    return true;
   }
 
 private:

@@ -39,6 +39,7 @@ public:
     imu_msg.linear_acceleration.z = ay;
 
     publishers_[header.name].publish(imu_msg);
+    return true;
   }
 
 private:

@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 
     int count = 0;
     while (ros::ok()) {
-        tf::Vector3 origin(-38,10,6.5);
+        tf::Vector3 origin(-38, 7, 13);
 
         double t = (ros::Time::now()-start).toSec();
 
@@ -39,16 +39,14 @@ int main(int argc, char **argv)
         geometry_msgs::Twist acceleration;
         acceleration.linear.x = acceleration.linear.y = acceleration.linear.z = 0;
         acceleration.angular.x = acceleration.angular.y = acceleration.angular.z = 0;
-
 #if STATIC_POSE
         // Static Pose
-//        tf::Vector3 displacement(0,0,2);
-//        desired_pose.setOrigin(origin+displacement);
-//        tf::Quaternion q;
-//        q.setRPY(0,0,PI/4);
-//        count++;
-//        std::cout<<"Desired Orientation" << count << std::endl;
-//        desired_pose.setRotation(q);
+       tf::Vector3 displacement(0,0,2);
+       desired_pose.setOrigin(origin+displacement);
+       tf::Quaternion q;
+       q.setRPY(0,0,PI/4);
+       count++;
+       desired_pose.setRotation(q);
 
 #else
         // Circle
@@ -89,12 +87,12 @@ int main(int argc, char **argv)
         msg.accelerations[0] = acceleration;
         desired_state_pub.publish(msg);
 
-        std::stringstream ss;
-        ss << "Trajectory Position"
-           << " x:" << desired_pose.getOrigin().x()
-           << " y:" << desired_pose.getOrigin().y()
-           << " z:" << desired_pose.getOrigin().z();
-        ROS_INFO("%s", ss.str().c_str());
+        // std::stringstream ss;
+        // ss << "Trajectory Position"
+        //    << " x:" << desired_pose.getOrigin().x()
+        //    << " y:" << desired_pose.getOrigin().y()
+        //    << " z:" << desired_pose.getOrigin().z();
+        // ROS_INFO("%s", ss.str().c_str());
 
 #if TFOUTPUT
         br.sendTransform(tf::StampedTransform(desired_pose, ros::Time::now(),
