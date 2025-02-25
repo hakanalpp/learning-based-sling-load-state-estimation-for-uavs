@@ -67,3 +67,5 @@ Assets/*
 # ThirdPersonCharacter
 !Assets/Characters/ThirdPersonCharacter/Scripts/
 !Assets/Characters/ThirdPersonCharacter/Scripts/**.cs
+
+images
