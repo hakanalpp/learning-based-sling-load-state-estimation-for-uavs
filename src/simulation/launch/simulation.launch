@@ -30,7 +30,7 @@
     <param unless="$(arg corrupt_state_estimate)" name="drift_rw_factor" value="0.0"/>
 
     <!-- independent white noise -->
-    <param if="$(arg corrupt_state_estimate)" name="pos_white_sig" value="0.00"/>
+    <param if="$(arg corrupt_state_estimate)" name="pos_white_sig" value="0.005"/>
     <param unless="$(arg corrupt_state_estimate)" name="pos_white_sig" value="0.0"/>
 
     <!-- average number of seconds between jumps/drift updates -->
@@ -40,13 +40,10 @@
 
   <node name="w_to_unity" pkg="simulation" type="w_to_unity"/>
   
-  <node name="controller_node" pkg="controller_pkg" type="controller_node" output="screen"/>
+  <node name="controller_node" pkg="controller_pkg" type="controller_node"/>
   
-  <node name="data_recorder" pkg="simulation" type="data_recorder" output="screen"/>
 
-  <node name="mission_node" pkg="controller_pkg" type="mission_node" output="screen">
-     <param name="mission_file" value="$(find controller_pkg)/mission.yaml" />
-  </node>
+
 
   <node pkg="tf2_ros" type="static_transform_publisher"
         name="sim_true_body"      args="0 0 0 0 0 0 /Quadrotor/TrueState /true_body" />
