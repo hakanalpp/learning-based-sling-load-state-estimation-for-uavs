@@ -56,6 +56,7 @@ link_directories(${CATKIN_DEVEL_PREFIX}/lib)
 
 add_subdirectory(tcpimage)
 
+add_executable(data_recorder src/data_recorder.cpp)
 add_executable(unity_ros src/unity_ros.cpp)
 add_executable(state_estimate_corruptor_node src/state_estimate_corruptor_node.cpp)
 add_executable(w_to_unity src/w_to_unity.cpp)
@@ -63,6 +64,7 @@ add_executable(w_to_unity src/w_to_unity.cpp)
 target_link_libraries(unity_ros ${catkin_LIBRARIES} tcpstreamreader tcpimage)
 target_link_libraries(state_estimate_corruptor_node ${catkin_LIBRARIES})
 target_link_libraries(w_to_unity ${catkin_LIBRARIES} socket++ -pthread)
+target_link_libraries(data_recorder ${catkin_LIBRARIES})
 
 add_dependencies(w_to_unity libsocket ${catkin_EXPORTED_TARGETS})
 

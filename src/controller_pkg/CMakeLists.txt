@@ -7,6 +7,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--no-as-needed")
 
+find_package(yaml-cpp REQUIRED)
+include_directories(${YAML_CPP_INCLUDE_DIR})
+
 find_package(catkin REQUIRED COMPONENTS 
   roscpp 
   rospy 
@@ -35,7 +38,7 @@ add_executable(controller_node src/controller_node.cpp)
 add_dependencies(controller_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(controller_node ${catkin_LIBRARIES})
 
-add_executable(traj_publisher src/traj_publisher.cpp)
-add_dependencies(traj_publisher ${catkin_EXPORTED_TARGETS})
-target_link_libraries(traj_publisher ${catkin_LIBRARIES})
+add_executable(mission_node src/mission_node.cpp)
+add_dependencies(mission_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(mission_node ${catkin_LIBRARIES} yaml-cpp)
 

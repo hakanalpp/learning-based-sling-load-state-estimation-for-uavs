@@ -13,65 +13,17 @@
 
 #define PI M_PI
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//  PART 0 |  16.485 - Fall 2019  - Lab 3 coding assignment
-// ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-//
-//  In this code, we ask you to implement a geometric controller for a
-//  simulated UAV, following the publication:
-//
-//  [1] Lee, Taeyoung, Melvin Leoky, N. Harris McClamroch. "Geometric tracking
-//      control of a quadrotor UAV on SE (3)." Decision and Control (CDC),
-//      49th IEEE Conference on. IEEE, 2010
-//
-//  We use variable names as close as possible to the conventions found in the
-//  paper, however, we have slightly different conventions for the aerodynamic
-//  coefficients of the propellers (refer to the lecture notes for these).
-//  Additionally, watch out for the different conventions on reference frames
-//  (see Lab 3 Handout for more details).
-//
-//  The include below is strongly suggested [but not mandatory if you have
-//  better alternatives in mind :)]. Eigen is a C++ library for linear algebra
-//  that will help you significantly with the implementation. Check the
-//  quick reference page to learn the basics:
-//
-//  https://eigen.tuxfamily.org/dox/group__QuickRefPage.html
 
 #include <eigen3/Eigen/Dense>
-
-// If you choose to use Eigen, tf provides useful functions to convert tf 
-// messages to eigen types and vice versa, have a look to the documentation:
-// http://docs.ros.org/melodic/api/eigen_conversions/html/namespacetf.html
 #include <eigen_conversions/eigen_msg.h>
-
-// ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-//                                 end part 0
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class controllerNode{
   ros::NodeHandle nh;
-
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  //  PART 1 |  Declare ROS callback handlers
-  // ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-  //
-  // In this section, you need to declare:
-  //   1. two subscribers (for the desired and current UAVStates)
-  //   2. one publisher (for the propeller speeds)
-  //   3. a timer for your main control loop
-  //
-  // ~~~~ begin solution
 
   ros::Subscriber desired_state, current_state;
   ros::Publisher prop_speeds;
   ros::Timer timer;
 
-  // ~~~~ end solution
-  // ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-  //                                 end part 1
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-  // Controller parameters
   double kx, kv, kr, komega; // controller gains - [1] eq (15), (16)
 
   // Physical constants (we will set them below)
@@ -98,8 +50,6 @@ class controllerNode{
   double yawd;           // desired yaw angle
 
   double hz;             // frequency of the main control loop
-
-
   static Eigen::Vector3d Vee(const Eigen::Matrix3d& in){
     Eigen::Vector3d out;
     out << in(2,1), in(0,2), in(1,0);
@@ -113,23 +63,6 @@ class controllerNode{
 public:
   controllerNode():e3(0,0,1),F2W(4,4),hz(1000.0){
 
-      // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      //  PART 2 |  Initialize ROS callback handlers
-      // ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-      //
-      // In this section, you need to initialize your handlers from part 1.
-      // Specifically:
-      //  - bind controllerNode::onDesiredState() to the topic "desired_state"
-      //  - bind controllerNode::onCurrentState() to the topic "current_state"
-      //  - bind controllerNode::controlLoop() to the created timer, at frequency
-      //    given by the "hz" variable
-      //
-      // Hints: 
-      //  - use the nh variable already available as a class member
-      //  - read the lab 3 handout to fnd the message type
-      //
-      // ~~~~ begin solution
-      
       desired_state = nh.subscribe("desired_state", 1, &controllerNode::onDesiredState, this);
       current_state = nh.subscribe("current_state_est", 1, &controllerNode::onCurrentState, this);
       prop_speeds = nh.advertise<mav_msgs::Actuators>("rotor_speed_cmds", 1);

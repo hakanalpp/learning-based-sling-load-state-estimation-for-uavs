@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// Kafasını kopardın bunun schatzi
 public class AddRenderSegOnTag : MonoBehaviour {
 
 	Terrain terrain;
