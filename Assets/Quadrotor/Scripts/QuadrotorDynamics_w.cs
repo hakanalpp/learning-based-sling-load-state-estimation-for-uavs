@@ -121,6 +121,9 @@ public class QuadrotorDynamics_w : MonoBehaviour {
 	void FixedUpdate () {
 
 		w_ = GrabW();
+		if (w_ == null) {
+			return;
+		}
 		Vector4 w = new Vector4 (w_[0], w_[1], w_[2], w_[3]);
 		//Debug.Log("W vector is " + w.ToString());
 

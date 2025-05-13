@@ -69,3 +69,7 @@ Assets/*
 !Assets/Characters/ThirdPersonCharacter/Scripts/**.cs
 
 images
+lightning_logs
+data
+tb_logs
+*.ckpt

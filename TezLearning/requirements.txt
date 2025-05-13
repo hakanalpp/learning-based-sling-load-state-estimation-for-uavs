@@ -1,0 +1,9 @@
+lightning==2.5.1
+matplotlib==3.10.1
+opencv-python==4.11.0.86
+pandas==2.2.3
+scipy==1.15.2
+tensorboard==2.19.0
+tensorboardX==2.6.2.2
+torchaudio==2.6.0
+torchvision==0.21.0

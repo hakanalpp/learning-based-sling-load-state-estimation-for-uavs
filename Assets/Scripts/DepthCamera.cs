@@ -23,11 +23,11 @@ public class DepthCamera : RGBCamera {
 	}
 
 	void OnRenderImage(RenderTexture src, RenderTexture dest) {
-		Graphics.Blit(src, dest, material);
-		if (send_image) {
-            server.SendHeader(type, full_name, time_server.GetFrameTicks());
-			SendImage(dest);
-			send_image = false;
-		}
+		// Graphics.Blit(src, dest, material);
+		// if (send_image) {
+    //         server.SendHeader(type, full_name, time_server.GetFrameTicks());
+			// SendImage(dest);
+		// 	send_image = false;
+		// }
 	}
 }

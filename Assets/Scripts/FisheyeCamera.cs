@@ -7,14 +7,14 @@ public class FisheyeCamera : RGBCamera {
 	RenderFisheye fisheye_script;
 	
 	public RenderCubemap cubemap_script;
-    public Shader shader;
-    public float alpha = 4.0f;
-    public float chi = 0.0f;
-    public float focalLength = 1.0f;
+	public Shader shader;
+	public float alpha = 4.0f;
+	public float chi = 0.0f;
+	public float focalLength = 1.0f;
 	private Material _material;
 
 
-	// void Update () {
+	void Update () {
 		// if(fisheye_script == null) {
 			// fisheye_script = GetComponent<RenderFisheye>();
 		// }
@@ -23,7 +23,7 @@ public class FisheyeCamera : RGBCamera {
 		// server.SendData(fisheye_script.chi);
 		// server.SendData(fisheye_script.focalLength);
 		// SendImage();
-	// }
+	}
 	
     private Material material {
         get {
@@ -41,8 +41,7 @@ public class FisheyeCamera : RGBCamera {
             DestroyImmediate(_material);
     }
 
-    void OnRenderImage(RenderTexture source, RenderTexture destination)
-    {
+    void OnRenderImage(RenderTexture source, RenderTexture destination) {
 		// if(fisheye_script == null) {
 	        // fisheye_script = GetComponent<FisheyeCamera>();
 	    // }
@@ -55,13 +54,13 @@ public class FisheyeCamera : RGBCamera {
         } else {
             Graphics.Blit(source, destination);
         }
-	    if (send_image)
-	    {
-		    server.SendHeader(type, full_name, time_server.GetFrameTicks());
-		    server.SendData(alpha);
-		    server.SendData(chi);
-		    server.SendData(focalLength);
-			SendImage(destination);
-	    }
+	    // if (send_image)
+	    // {
+		  //   server.SendHeader(type, full_name, time_server.GetFrameTicks());
+		  //   server.SendData(alpha);
+		  //   server.SendData(chi);
+		  //   server.SendData(focalLength);
+			// SendImage(destination);
+	    // }
     }
 }

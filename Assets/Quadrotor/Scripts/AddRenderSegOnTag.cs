@@ -18,13 +18,13 @@ public class AddRenderSegOnTag : MonoBehaviour {
 		colors.Add (Color.cyan);
 		colors.Add (Color.white);
 		List<string> objects_tagged = new List<string>();
-		objects_tagged.Add("Road");
-		objects_tagged.Add("Car");
-		objects_tagged.Add("TrafficLight");
-		objects_tagged.Add("Tree");
-		objects_tagged.Add("Landscape");
-		objects_tagged.Add("Human");
-		objects_tagged.Add("Streetlight");
+		//objects_tagged.Add("Road");
+		//objects_tagged.Add("Car");
+		//objects_tagged.Add("TrafficLight");
+		//objects_tagged.Add("Tree");
+		//objects_tagged.Add("Landscape");
+		//objects_tagged.Add("Human");
+		//objects_tagged.Add("Streetlight");
 
 		int i = 0;
 		foreach (string _object in objects_tagged){

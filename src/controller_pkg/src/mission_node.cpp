@@ -28,7 +28,7 @@ class missionNode {
   ros::Subscriber current_state_sub;
 
   const double initial_hover_time = 5.0;
-  const double waypoint_hover_time = 5.0;
+  const double waypoint_hover_time = 4.0;
   const double waypoint_threshold = 0.5;
 
   tf::Vector3 initial_position = tf::Vector3(0, 0, 0);
@@ -73,7 +73,7 @@ private:
     }
 
     current_wp_index = 0;
-    for (; current_wp_index < (int)waypoints.size() - 1; current_wp_index++) {
+    for (; current_wp_index < (int)waypoints.size(); current_wp_index++) {
       goToWaypoint();
     }
 
@@ -87,53 +87,60 @@ private:
     }
   }
 
-  void goToWaypoint() {
+void goToWaypoint() {
     Waypoint wp = waypoints[current_wp_index];
     tf::Vector3 target = tf::Vector3(wp.x, wp.y, wp.z);
+    
+    double cruise_speed = 3; // Max speed in m/s
+    double duration; 
+    tf::Vector3 start_position = current_position;
 
-    double duration = 10.0;
+    double distance = (target - start_position).length();
+    duration = distance / cruise_speed;  // Time to reach target
 
-    tf::Vector3 new_target;
-    double lala = missionTime();
-    double hovering_start_time, progress;
+    tf::Vector3 velocity_vector = (target - start_position).normalize() * cruise_speed;
+    
+    double start_mission_time = missionTime();
+    double progress = 0;
     bool reached_flag = false;
+    double hovering_start_time;
 
-    //RPY'yi burda ayarla
+    tf::Quaternion q;
+    q.setRPY(0, 0, atan2(target.y() - start_position.y(), target.x() - start_position.x()));
+    desired_pose.setRotation(q);
+
     while (ros::ok()) {
-      double distance = (target - current_position).length();
-      progress = (missionTime() - lala) / duration;
-      if (progress > 1) {
-        progress = 1;
-      }
-      new_target = current_position.lerp(target, progress);
-      desired_pose.setOrigin(new_target);
-      tf::Quaternion q;
-      q.setRPY(0, 0,
-               atan2(new_target.y() - current_position.y(),
-                     new_target.x() -
-                         current_position.x()));
-      desired_pose.setRotation(q);
+        double elapsed_time = missionTime() - start_mission_time;
+        progress = elapsed_time / duration;
 
-      publish();
-      ros::spinOnce();
-      loop_rate.sleep();
-      // ROS_INFO("[%.2f, %.2f, %.2f], [%.2f, %.2f, %.2f]",
-      // current_position.x(),
-      //          current_position.y(), current_position.z(), target.x(),
-      //          target.y(), target.z());
-      if (distance < waypoint_threshold) {
-        if (!reached_flag) {
-          ROS_INFO("Reached waypoint %d (error=%.2f)", current_wp_index,
-                   distance);
-          reached_flag = true;
-          hovering_start_time = missionTime();
+        if (progress > 1.0) progress = 1.0;
+        
+        tf::Vector3 new_target = start_position.lerp(target, progress);
+        desired_pose.setOrigin(new_target);
+
+        // Adjust velocity smoothly based on distance remaining
+        double remaining_distance = (target - new_target).length();
+        double speed_factor = remaining_distance / distance; // Slow down as it approaches
+        velocity.linear.x = velocity_vector.x() * speed_factor * 0.5;
+        velocity.linear.y = velocity_vector.y() * speed_factor * 0.5;
+        velocity.linear.z = velocity_vector.z() * speed_factor * 0.5;
+
+        publish();
+        ros::spinOnce();
+        loop_rate.sleep();
+
+        if (remaining_distance < waypoint_threshold) {
+            if (!reached_flag) {
+                ROS_INFO("Reached waypoint %d (error=%.2f)", current_wp_index, remaining_distance);
+                reached_flag = true;
+                hovering_start_time = missionTime();
+            }
+            if (missionTime() - hovering_start_time >= waypoint_hover_time) {
+                break;
+            }
         }
-        if (missionTime() - hovering_start_time >= waypoint_hover_time) {
-          break;
-        }
-      }
     }
-  }
+}
 
   void holdLastWaypoint() {
     Waypoint wp = waypoints.back();

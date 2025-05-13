@@ -24,7 +24,7 @@ public class StatePublisher : MonoBehaviour {
 			client.Connect (host, port);
 			stream = client.GetStream (); 
 		} catch(Exception ex) {
-			Debug.Log (ex.Message);
+			// Debug.Log (ex.Message);
 		}
 	}
 		

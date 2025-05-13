@@ -43,6 +43,11 @@
   <node name="controller_node" pkg="controller_pkg" type="controller_node"/>
   
 
+  <node name="data_recorder" pkg="simulation" type="data_recorder" output="screen"/>
+
+  <node name="mission_node" pkg="controller_pkg" type="mission_node" output="screen">
+     <param name="mission_file" value="$(find controller_pkg)/mission.yaml" />
+  </node>
 
 
   <node pkg="tf2_ros" type="static_transform_publisher"
