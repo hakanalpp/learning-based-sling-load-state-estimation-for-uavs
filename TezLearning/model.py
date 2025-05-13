@@ -72,26 +72,20 @@ class CargoPoseModel(pl.LightningModule):
         Returns:
             Weighted position error with higher penalties for large errors
         """
-        # Extract direction and distance components
         pred_direction = F.normalize(pred[:, 0:3], dim=-1)
         pred_dist = F.softplus(pred[:, 3:4])
 
         gt_direction = F.normalize(gt[:, 0:3], dim=-1)
         gt_dist = gt[:, 3:4]
 
-        # Calculate 3D positions
         pred_position = pred_direction * pred_dist
         gt_position = gt_direction * gt_dist
 
-        # Calculate Euclidean distance between predicted and ground truth positions
         position_errors = torch.norm(pred_position - gt_position, dim=1)
 
-        # Apply additional penalty for large errors (focusing on edge cases)
-        # This creates a quadratic penalty for errors above a threshold
         threshold = 0.5  # threshold in meters
         edge_case_errors = F.relu(position_errors - threshold) ** 2
 
-        # Combine linear error with quadratic edge case penalty
         weighted_errors = position_errors + 0.5 * edge_case_errors
 
         return weighted_errors.mean()
@@ -109,7 +103,6 @@ class CargoPoseModel(pl.LightningModule):
         L_dist = self._distance_loss(pred_dist, gt_dist)
         L_pos = self.position_error(pred, gt)
 
-        # Combine losses with weights
         loss = (
             self.λ_rot * L_rot
             + self.λ_dir * L_dir
