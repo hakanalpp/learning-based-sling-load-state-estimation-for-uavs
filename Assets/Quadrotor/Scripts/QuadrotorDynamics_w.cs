@@ -71,7 +71,7 @@ public class QuadrotorDynamics_w : MonoBehaviour {
             }
             return w;
         } else {
-            Debug.Log ("UDP client not available");
+            // Debug.Log ("UDP client not available");
             return null;
         }
     }

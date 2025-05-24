@@ -64,7 +64,7 @@ public class QuadrotorController : MonoBehaviour {
             }
             return pose;
         } else {
-            Debug.Log ("UDP client not available");
+            // Debug.Log ("UDP client not available");
             float[] pose_empty = new float[]{0, 0, 0, 1, 0, 0, 1};
             return pose_empty;
         }

@@ -10,24 +10,37 @@ using UnityEngine;
 
 public class TCPServer : MonoBehaviour
 {
-    private object syncLock = new object();
-
+    TcpListener server;
     Dictionary<string, ICommandable> commandables = new Dictionary<string, ICommandable>();
 
-    TcpListener server;
-    public string host = "localhost";
-    public int port = 9998;
-    private Thread tcpCommandListenerThread;
-    private Thread tcpSensorListenerThread;
+    private object syncLock = new object();
+    private object floatDataLock = new object();
 
+    public Transform ghostBox;
+
+    public Transform cargoConnection;
+
+
+    protected string host = "localhost";
+    protected int port = 9998;
+    protected int portAI = 10001;
+    protected int floatDataPort = 9997;
+    protected float connectionTimeoutSeconds = 1.0f; // Timeout for connection attempts
+
+    private Thread tcpCommandListenerThread;
+    private Thread floatDataListenerThread;
     private TcpClient connectedTcpClient;
 
     private TcpClient client;
     private Stream stream;
 
-    private Queue<string> messageQueue = new Queue<string>();
+    private TcpClient clientAI;
+    private Stream streamAI;
 
-    //TODO: split command and sensor servers into two classes
+    private Queue<string> messageQueue = new Queue<string>();
+    private Queue<float[]> floatDataQueue = new Queue<float[]>(); // Queue for received float data
+    private bool isConnecting = false;
+
     void StartCommandThread()
     {
         tcpCommandListenerThread = new Thread(new ThreadStart(ListenForCommandConnections));
@@ -35,19 +48,143 @@ public class TCPServer : MonoBehaviour
         tcpCommandListenerThread.Start();
     }
 
+    void StartFloatDataThread()
+    {
+        floatDataListenerThread = new Thread(new ThreadStart(ListenForFloatData));
+        floatDataListenerThread.IsBackground = true;
+        floatDataListenerThread.Start();
+    }
 
-    void Connect()
+    // Method for listening for float data on port 9997
+    private void ListenForFloatData()
     {
         try
         {
-            client = new TcpClient();
-            Debug.Log("trying to connect to " + host + " on port " + port);
-            client.Connect(host, port);
-            stream = client.GetStream();
+            TcpListener floatDataListener = new TcpListener(IPAddress.Parse("127.0.0.1"), floatDataPort);
+            floatDataListener.Start();
+            Debug.Log("Float data server is listening on port " + floatDataPort);
+            byte[] buffer = new byte[72]; // Buffer for 15 floats (4 bytes each)
+
+            while (true)
+            {
+                try
+                {
+                    using (TcpClient dataClient = floatDataListener.AcceptTcpClient())
+                    {
+                        Debug.Log("Float data client connected");
+                        dataClient.ReceiveTimeout = 5000; // 5 second timeout
+
+                        using (NetworkStream stream = dataClient.GetStream())
+                        {
+                            int bytesRead;
+                            while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) == 72) // Ensure we read all 60 bytes
+                            {
+                                float[] floatArray = new float[18];
+                                for (int i = 0; i < 18; i++)
+                                {
+                                    floatArray[i] = BitConverter.ToSingle(buffer, i * 4);
+                                }
+
+                                // Queue the data for processing on the main thread
+                                lock (floatDataLock)
+                                {
+                                    floatDataQueue.Enqueue(floatArray);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (SocketException ex)
+                {
+                    Debug.LogWarning($"Socket exception in float data listener: {ex.Message}");
+                    Thread.Sleep(1000);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"Error in float data listener: {ex.Message}\n{ex.StackTrace}");
+                    Thread.Sleep(1000);
+                }
+            }
+        }
+        catch (SocketException socketException)
+        {
+            Debug.LogError($"Fatal float data socket exception: {socketException.ToString()}");
         }
         catch (Exception ex)
         {
-            Debug.Log(ex.Message);
+            Debug.LogError($"Fatal error in float data thread: {ex.Message}\n{ex.StackTrace}");
+        }
+    }
+
+    // Use coroutines for non-blocking connection attempts
+    IEnumerator ConnectAsync()
+    {
+        if (isConnecting)
+            yield break;
+        isConnecting = true;
+        yield return StartCoroutine(ConnectMainClient());
+        yield return StartCoroutine(ConnectAIClient());
+        isConnecting = false;
+    }
+
+    IEnumerator ConnectMainClient()
+    {
+        if (client != null && client.Connected)
+            yield break;
+
+        yield return StartCoroutine(TryConnectClient(port, (newClient, newStream) =>
+        {
+            client = newClient;
+            stream = newStream;
+        }));
+    }
+
+    IEnumerator ConnectAIClient()
+    {
+        if (clientAI != null && clientAI.Connected)
+            yield break;
+
+        yield return StartCoroutine(TryConnectClient(portAI, (newClient, newStream) =>
+        {
+            clientAI = newClient;
+            streamAI = newStream;
+        }));
+    }
+
+    IEnumerator TryConnectClient(int portNum, Action<TcpClient, Stream> onSuccess)
+    {
+        TcpClient newClient = new TcpClient();
+
+        IAsyncResult result = newClient.BeginConnect(host, portNum, null, null);
+
+        float startTime = Time.time;
+        while (!result.IsCompleted)
+        {
+            if (Time.time - startTime > connectionTimeoutSeconds)
+            {
+                Debug.Log($"Connection attempt to port {portNum} timed out");
+                newClient.Close();
+                yield break;
+            }
+
+            yield return null;
+        }
+
+        try
+        {
+            newClient.EndConnect(result);
+
+            if (newClient.Connected)
+            {
+                Stream newStream = newClient.GetStream();
+                onSuccess(newClient, newStream);
+                Debug.Log($"Connected to port {portNum} successfully");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Debug.Log($"Error connecting to port {portNum}: {ex.Message}");
+            newClient.Close();
         }
     }
 
@@ -56,17 +193,24 @@ public class TCPServer : MonoBehaviour
         QualitySettings.vSyncCount = 0;  // VSync must be disabled
         Application.targetFrameRate = 100;
         StartCommandThread();
-        Connect();
+        StartFloatDataThread(); // Start the float data listener thread
+        StartCoroutine(ConnectAsync());
     }
-
-
 
     public void SendHeader(uint type, string name, long ticks)
     {
-        SendData(BitConverter.GetBytes(0xDEADC0DE));
-        SendData(BitConverter.GetBytes(type));
-        SendData(BitConverter.GetBytes(ticks));
-        SendData(name);
+        try
+        {
+            SendData(BitConverter.GetBytes(0xDEADC0DE));
+            SendData(BitConverter.GetBytes(type));
+            SendData(BitConverter.GetBytes(ticks));
+            SendData(name);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Error sending header: {ex.Message}");
+            client = null; // Mark for reconnection
+        }
     }
 
     public void SendData(Quaternion data)
@@ -99,11 +243,56 @@ public class TCPServer : MonoBehaviour
         SendData(BitConverter.GetBytes(data));
     }
 
+    public void SendDataToAI(byte[] data, Vector3 position, Quaternion rotation, float[] label)
+    {
+        if (clientAI == null || !clientAI.Connected)
+            return;
+        try
+        {
+            byte[] positionBytes = new byte[12];
+            byte[] rotationBytes = new byte[16];
+
+            Buffer.BlockCopy(BitConverter.GetBytes(position.x), 0, positionBytes, 0, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(position.y), 0, positionBytes, 4, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(position.z), 0, positionBytes, 8, 4);
+
+            Buffer.BlockCopy(BitConverter.GetBytes(rotation.x), 0, rotationBytes, 0, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(rotation.y), 0, rotationBytes, 4, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(rotation.z), 0, rotationBytes, 8, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(rotation.w), 0, rotationBytes, 12, 4);
+
+            streamAI.Write(data, 0, data.Length);
+
+            streamAI.Write(positionBytes, 0, positionBytes.Length);
+            streamAI.Write(rotationBytes, 0, rotationBytes.Length);
+
+            byte[] labelByteArray = new byte[label.Length * 4];
+            Buffer.BlockCopy(label, 0, labelByteArray, 0, labelByteArray.Length);
+
+            streamAI.Write(labelByteArray, 0, labelByteArray.Length);
+
+            streamAI.Flush();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"Error sending data to AI client: {ex.Message}");
+            clientAI = null;
+        }
+    }
+
     public void SendData(byte[] data)
     {
-        if (client.Connected)
+        if (client == null || !client.Connected)
+            return;
+        try
         {
             stream.Write(data, 0, data.Length);
+            stream.Flush();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"Error sending data to main client: {ex.Message}");
+            client = null; // Mark for reconnection
         }
     }
 
@@ -125,7 +314,7 @@ public class TCPServer : MonoBehaviour
             {
                 using (connectedTcpClient = tcpListener.AcceptTcpClient())
                 {
-                    Debug.Log("Command client connected");
+                    // Debug.Log("Command client connected");
                     using (NetworkStream stream = connectedTcpClient.GetStream())
                     {
                         int length;
@@ -166,21 +355,99 @@ public class TCPServer : MonoBehaviour
                         commandables[object_name].OnCommand(message_words);
                     }
                 }
-
             }
         }
     }
 
+    void ProcessFloatData()
+    {
+        lock (floatDataLock)
+        {
+            if (floatDataQueue.Count > 0)
+            {
+                float[] floatArray = null;
+
+                while (floatDataQueue.Count > 0)
+                {
+                    floatArray = floatDataQueue.Dequeue();
+                }
+
+                if (floatArray != null)
+                {
+                    ModifyGhostBox(floatArray);
+                }
+            }
+        }
+    }
+
+    void ModifyGhostBox(float[] floatArray)
+    {
+        // Extract predictions from the LSTM model (11 values total)
+        Vector3 directionVector = new Vector3(floatArray[0], floatArray[1], floatArray[2]);
+        directionVector.Normalize(); // Ensure the direction vector is normalized
+        // Note: directionVector is already normalized from the model
+        float distance = floatArray[3];
+        Quaternion cargoRotation = new Quaternion(floatArray[4], floatArray[5], floatArray[6], floatArray[7]);
+        // floatArray[8], floatArray[9], floatArray[10] are velocity (ignored)
+
+        // Adjusted indices for drone state
+        Vector3 dronePosition = new Vector3(floatArray[11], floatArray[12], floatArray[13]);
+        Quaternion droneRotation = new Quaternion(floatArray[14], floatArray[15], floatArray[16], floatArray[17]);
+
+        Vector3 real_vec_world = cargoConnection.position - dronePosition;
+        float real_distance = real_vec_world.magnitude;
+
+        // CORRECT: First rotate the direction to world space, THEN scale by distance
+        Vector3 directionInWorld = droneRotation * directionVector;
+        Vector3 vec_world = dronePosition + directionInWorld * distance;
+
+        ghostBox.position = vec_world;
+        ghostBox.rotation = droneRotation * cargoRotation;
+
+        Debug.Log("Direction Vector: " + directionVector + " Distance: " + distance + " ghostboxPosition " + vec_world + " dronePosition: " + dronePosition);
+
+
+        // draw debug rays downward of drone
+        Debug.DrawRay(dronePosition, droneRotation * Vector3.down, Color.blue, 0.1f);
+
+        Debug.DrawRay(dronePosition, real_vec_world, Color.green, 0.1f);
+        Debug.DrawRay(dronePosition, directionInWorld * distance, Color.red, 0.1f);
+    }
     void FixedUpdate()
     {
         ProcessMessages();
+        ProcessFloatData();
     }
 
     void Update()
     {
-        if (!client.Connected)
+        if (!isConnecting && (client == null || !client.Connected || clientAI == null || !clientAI.Connected))
         {
-            Connect();
+            // Debug.Log("Detected disconnection, attempting to reconnect...");
+            StartCoroutine(ConnectAsync());
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (client != null)
+        {
+            client.Close();
+        }
+
+        if (clientAI != null)
+        {
+            clientAI.Close();
+        }
+
+        if (tcpCommandListenerThread != null && tcpCommandListenerThread.IsAlive)
+        {
+            tcpCommandListenerThread.Abort();
+        }
+
+        if (floatDataListenerThread != null && floatDataListenerThread.IsAlive)
+        {
+            floatDataListenerThread.Abort();
         }
     }
 }

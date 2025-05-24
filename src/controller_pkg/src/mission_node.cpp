@@ -27,9 +27,11 @@ class missionNode {
   ros::Publisher desired_state;
   ros::Subscriber current_state_sub;
 
-  const double initial_hover_time = 5.0;
-  const double waypoint_hover_time = 4.0;
-  const double waypoint_threshold = 0.5;
+  double initial_hover_time;
+  double waypoint_hover_time;
+  double waypoint_threshold;
+  double cruise_speed;
+  double acceleration_limit;
 
   tf::Vector3 initial_position = tf::Vector3(0, 0, 0);
   std::vector<Waypoint> waypoints;
@@ -87,23 +89,23 @@ private:
     }
   }
 
-void goToWaypoint() {
+  void goToWaypoint() {
     Waypoint wp = waypoints[current_wp_index];
     tf::Vector3 target = tf::Vector3(wp.x, wp.y, wp.z);
+    ROS_INFO("Going to waypoint %d: [%.2f, %.2f, %.2f]", current_wp_index,
+             target.x(), target.y(), target.z());
     
-    double cruise_speed = 3; // Max speed in m/s
-    double duration; 
     tf::Vector3 start_position = current_position;
-
     double distance = (target - start_position).length();
-    duration = distance / cruise_speed;  // Time to reach target
+    double duration = distance / cruise_speed;
 
-    tf::Vector3 velocity_vector = (target - start_position).normalize() * cruise_speed;
+    tf::Vector3 direction = (target - start_position).normalize();
     
     double start_mission_time = missionTime();
     double progress = 0;
     bool reached_flag = false;
     double hovering_start_time;
+    double previous_speed = 0;
 
     tf::Quaternion q;
     q.setRPY(0, 0, atan2(target.y() - start_position.y(), target.x() - start_position.x()));
@@ -115,15 +117,38 @@ void goToWaypoint() {
 
         if (progress > 1.0) progress = 1.0;
         
-        tf::Vector3 new_target = start_position.lerp(target, progress);
-        desired_pose.setOrigin(new_target);
+        tf::Vector3 new_position = start_position.lerp(target, progress);
+        desired_pose.setOrigin(new_position);
 
-        // Adjust velocity smoothly based on distance remaining
-        double remaining_distance = (target - new_target).length();
-        double speed_factor = remaining_distance / distance; // Slow down as it approaches
-        velocity.linear.x = velocity_vector.x() * speed_factor * 0.5;
-        velocity.linear.y = velocity_vector.y() * speed_factor * 0.5;
-        velocity.linear.z = velocity_vector.z() * speed_factor * 0.5;
+        double remaining_distance = (target - new_position).length();
+        double dt = 1.0 / 500.0;  // Based on 500Hz loop rate
+        
+        double desired_speed;
+        if (remaining_distance > waypoint_threshold) {
+            double stopping_distance = (previous_speed * previous_speed) / (2 * acceleration_limit);
+            
+            if (remaining_distance > stopping_distance && previous_speed < cruise_speed) {
+                desired_speed = previous_speed + acceleration_limit * dt;
+                if (desired_speed > cruise_speed) desired_speed = cruise_speed;
+            } else if (remaining_distance <= stopping_distance) {
+                desired_speed = previous_speed - acceleration_limit * dt;
+                if (desired_speed < 0) desired_speed = 0;
+            } else {
+                desired_speed = cruise_speed;
+            }
+        } else {
+            desired_speed = 0;
+        }
+        
+        previous_speed = desired_speed;
+
+        velocity.linear.x = direction.x() * desired_speed;
+        velocity.linear.y = direction.y() * desired_speed;
+        velocity.linear.z = direction.z() * desired_speed;
+        
+        acceleration.linear.x = direction.x() * acceleration_limit * (desired_speed > previous_speed ? 1 : -1);
+        acceleration.linear.y = direction.y() * acceleration_limit * (desired_speed > previous_speed ? 1 : -1);
+        acceleration.linear.z = direction.z() * acceleration_limit * (desired_speed > previous_speed ? 1 : -1);
 
         publish();
         ros::spinOnce();
@@ -140,7 +165,7 @@ void goToWaypoint() {
             }
         }
     }
-}
+  }
 
   void holdLastWaypoint() {
     Waypoint wp = waypoints.back();
@@ -186,8 +211,19 @@ void goToWaypoint() {
       ROS_ERROR("No mission file specified on the parameter server!");
       return;
     }
+    
     try {
       mission_config = YAML::LoadFile(mission_file);
+      
+      cruise_speed = mission_config["speed"].as<double>(5.0);
+      initial_hover_time = mission_config["initial_hover_time"].as<double>(5.0);
+      waypoint_hover_time = mission_config["waypoint_hover_time"].as<double>(3.0);
+      waypoint_threshold = mission_config["waypoint_threshold"].as<double>(0.5);
+      acceleration_limit = mission_config["acceleration_limit"].as<double>(2.0);
+      
+      ROS_INFO("Mission parameters: speed=%.2f, initial_hover=%.2f, wp_hover=%.2f, wp_threshold=%.2f, accel_limit=%.2f",
+               cruise_speed, initial_hover_time, waypoint_hover_time, waypoint_threshold, acceleration_limit);
+      
       if (mission_config["initial"]) {
         initial_position =
             tf::Vector3(mission_config["initial"]["x"].as<double>(),
@@ -200,10 +236,12 @@ void goToWaypoint() {
         ROS_WARN(
             "No 'initial' key found in mission file; using defaults [0,0,0]");
       }
+      
       if (!mission_config["waypoints"]) {
         ROS_ERROR("Mission file does not contain 'waypoints' key");
         return;
       }
+      
       for (const auto &wp : mission_config["waypoints"]) {
         Waypoint w;
         w.x = wp["x"].as<double>();

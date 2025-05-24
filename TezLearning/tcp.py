@@ -64,28 +64,41 @@ class TCPHandler:
                 raise
         return buf
 
+    def _receive_image(self, sock: socket.socket) -> np.ndarray:
+        try:
+            img_data = self._receive_data(sock, self.img_size)
+        except (ConnectionError, OSError) as e:
+            print(f"Error receiving image data: {e}")
+            return None
+
+        img = np.frombuffer(img_data, np.uint8).reshape(
+            self.image_height, self.image_width, 3
+        )
+        return img
+
+    def _receive_pose_and_label(self, sock: socket.socket) -> tuple[List[float], List[float], List[float]]:
+        try:
+            pose_data = self._receive_data(sock, 28)
+            label_data = self._receive_data(sock, 44)
+        except Exception as e:
+            print(f"Error receiving pose and label data: {e}")
+            return None
+
+        position_data = pose_data[:12]
+        x, y, z = struct.unpack("<3f", position_data)
+        
+        rotation_data = pose_data[12:]
+        qx, qy, qz, qw = struct.unpack("<4f", rotation_data)
+        label = list(struct.unpack("<11f", label_data))
+    
+        return [x, y, z], [qx, qy, qz, qw], label
+    
     def _handle_client(self, conn: socket.socket, callback: Callable) -> None:
         while not self.stop_thread.is_set():
-            try:
-                img_data = self._receive_data(conn, self.img_size)
-            except (ConnectionError, OSError) as e:
-                print(f"Error receiving image data: {e}")
-                break
+            image = self._receive_image(conn)
+            position, rotation, label= self._receive_pose_and_label(conn)
 
-            try:
-                pose_data = self._receive_data(conn, 28)
-                position_data = pose_data[:12]
-                x, y, z = struct.unpack("<3f", position_data)
-                rotation_data = pose_data[12:]
-                qx, qy, qz, qw = struct.unpack("<4f", rotation_data)
-            except Exception as e:
-                print(f"Error receiving drone pose data: {e}")
-                break
-
-            img = np.frombuffer(img_data, np.uint8).reshape(
-                self.image_height, self.image_width, 3
-            )
-            callback(img, [x, y, z], [qx, qy, qz, qw])
+            callback(image, position, rotation, label)
 
     def start_receiver(self, callback: Callable) -> None:
         self.receiver_thread = threading.Thread(
@@ -103,7 +116,7 @@ class TCPHandler:
             all_values = values.copy()
             all_values.extend(position)
             all_values.extend(rotation)
-            packed_data = struct.pack("<15f", *all_values)
+            packed_data = struct.pack("<18f", *all_values)
             sock.sendall(packed_data)
             sock.close()
         except Exception as e:

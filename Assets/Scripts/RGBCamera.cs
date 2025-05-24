@@ -1,75 +1,195 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public class RGBCamera : ICommandable {
+public class RGBCamera : ICommandable
+{
+	public bool recording = false;
+	public bool send_image_to_ros = false;
+
 	RenderTexture cameraImage;
 	public RenderTexture outputImage;
 	Texture2D myTexture2D;
 	public Camera camera;
-	
-	public int width = 320;
-	public int height = 240;
+	public Transform cargoBox;
+	Rigidbody rb;
+
+	public Transform connectionPoint;
+
+	public int width = 224;
+	public int height = 224;
 	public float fieldOfView = 90.0f;
 	public float farClipPlane = 65.535f;
-	public float targetFrameRate = 30.0f;
+	public float targetFrameRate = 60.0f;
 	public bool monochrome = false;
-	const uint type = 1;
 	float time_last_image_sent = 0.0f;
 	protected bool send_image = false;
-	
 	protected RenderTextureReadWrite render_texture_read_write = RenderTextureReadWrite.Default;
 
-	void Initialize() {
-        cameraImage = new RenderTexture(width, height, 24, RenderTextureFormat.DefaultHDR, render_texture_read_write);
-        outputImage = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32, render_texture_read_write);
+	public string folderPath = "/home/alp/noetic_ws/src/simulation/images";      // root folder
+	public string csvFileName = "cargo_data.csv";
+	private string csvPath;
+	private string runFolderPath;
+	private int runNumber = 0;
 
-		if(camera == null) {
+	void Awake()
+	{
+		Initialize();
+		if (recording)
+		{
+			Directory.CreateDirectory(folderPath);
+			string[] existingRuns = Directory.GetDirectories(folderPath, "run_*");
+			runNumber = existingRuns.Length;
+			string runId = $"run_{runNumber}";
+			runFolderPath = Path.Combine(folderPath, runId);
+			Directory.CreateDirectory(runFolderPath);
+
+			csvPath = Path.Combine(runFolderPath, csvFileName);
+			if (!File.Exists(csvPath))
+			{
+				using (StreamWriter sw = File.CreateText(csvPath))
+				{
+					sw.WriteLine(
+							"frameId,drone_pos_x,drone_pos_y,drone_pos_z," +
+							"drone_rot_x,drone_rot_y,drone_rot_z,drone_rot_w," +
+							"drone_vel_x,drone_vel_y,drone_vel_z," +
+							"cargo_pos_x,cargo_pos_y,cargo_pos_z," +
+							"cargo_rot_x,cargo_rot_y,cargo_rot_z,cargo_rot_w," +
+							"cargo_vel_x,cargo_vel_y,cargo_vel_z"
+					);
+				}
+			}
+		}
+	}
+
+	void Initialize()
+	{
+		rb = gameObject.GetComponentInParent(typeof(Rigidbody)) as Rigidbody;
+		if (rb == null)
+		{
+			Debug.LogError("Failed to find Rigidbody component in parent objects!");
+		}
+
+		cameraImage = new RenderTexture(width, height, 24, RenderTextureFormat.DefaultHDR, render_texture_read_write);
+		outputImage = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32, render_texture_read_write);
+
+		if (camera == null)
+		{
 			camera = GetComponent<Camera>();
 		}
 		camera.farClipPlane = farClipPlane;
+		camera.fieldOfView = fieldOfView;
 		camera.depthTextureMode = DepthTextureMode.Depth;
 		camera.targetTexture = cameraImage;
 
-		myTexture2D = new Texture2D (cameraImage.width, cameraImage.height, TextureFormat.RGB24, false);
+		myTexture2D = new Texture2D(cameraImage.width, cameraImage.height, TextureFormat.RGB24, false);
 	}
 
-	void OnPreRender() {
-		camera.farClipPlane = farClipPlane;
-		camera.fieldOfView = fieldOfView;
-	}	
 
-	void OnRenderImage(RenderTexture src, RenderTexture dest) {
+	void OnRenderImage(RenderTexture src, RenderTexture dest)
+	{
 		Graphics.Blit(src, outputImage);
-		if (send_image) {
-            server.SendHeader(type, full_name, time_server.GetFrameTicks());
-			SendImage(outputImage);
+
+		if (recording)
+		{
+			long frameId = time_server.GetFrameTicks();
+			SaveImageLocally(outputImage, frameId);
+			LogCargoPoseCSV(frameId);
+		}
+
+		if (send_image && send_image_to_ros)
+		{
+			server.SendHeader(1, full_name, time_server.GetFrameTicks());
+			SendImageToRos(outputImage);
 			send_image = false;
+		}
+
+		SendImageToAI(outputImage);
+	}
+	protected void SendImageToAI(RenderTexture tex)
+	{
+		RenderTexture.active = tex;
+		myTexture2D.ReadPixels(new Rect(0, 0, tex.width, tex.height), 0, 0, false);
+		byte[] imageBytes = myTexture2D.GetRawTextureData();
+
+		Vector3 vec_world = cargoBox.position - rb.position;
+		Vector3 vec_local = Quaternion.Inverse(rb.rotation) * vec_world;
+		float distance = vec_world.magnitude;
+		Vector3 normalized_vec_local = vec_local / distance;
+
+		Rigidbody cargoRb = cargoBox.GetComponent<Rigidbody>();
+		Vector3 cargoVelocity = cargoRb != null ? cargoRb.velocity : Vector3.zero;
+
+		float[] label = new float[11];
+
+		label[0] = normalized_vec_local.x;
+		label[1] = normalized_vec_local.y;
+		label[2] = normalized_vec_local.z;
+
+		label[3] = distance;
+
+		label[4] = cargoBox.rotation.x;
+		label[5] = cargoBox.rotation.x;
+		label[6] = cargoBox.rotation.y;
+		label[7] = cargoBox.rotation.w;
+
+		// Velocity (cargoBox velocity)
+		label[8] = cargoVelocity.x;
+		label[9] = cargoVelocity.y;
+		label[10] = cargoVelocity.z;
+
+		server.SendDataToAI(imageBytes, rb.position, rb.rotation, label);
+	}
+	protected void SendImageToRos(RenderTexture tex)
+	{
+		RenderTexture.active = tex;
+		myTexture2D.ReadPixels(new Rect(0, 0, tex.width, tex.height), 0, 0, false);
+		byte[] imageBytes = myTexture2D.GetRawTextureData();
+		server.SendData(monochrome ? 1 : 0);
+		server.SendData(fieldOfView);
+		server.SendData(farClipPlane);
+		server.SendData(tex.width);
+		server.SendData(tex.height);
+		server.SendData(imageBytes);
+	}
+
+	void SaveImageLocally(RenderTexture tex, long frameId)
+	{
+		RenderTexture.active = tex;
+		myTexture2D.ReadPixels(new Rect(0, 0, tex.width, tex.height), 0, 0, false);
+		myTexture2D.Apply();
+
+		byte[] bytes = myTexture2D.EncodeToJPG();
+		string fname = $"{frameId}.jpg";
+		File.WriteAllBytes(Path.Combine(runFolderPath, fname), bytes);
+	}
+
+	void LogCargoPoseCSV(long frameId)
+	{
+		using (StreamWriter sw = File.AppendText(csvPath))
+		{
+			Vector3 cargoVel = cargoBox.GetComponent<Rigidbody>().velocity;
+
+			sw.WriteLine(
+					$"{frameId},{rb.position.x},{rb.position.y},{rb.position.z}," +
+					$"{rb.rotation.x},{rb.rotation.y},{rb.rotation.z},{rb.rotation.w}," +
+					$"{rb.velocity.x},{rb.velocity.y},{rb.velocity.z}," +
+					$"{connectionPoint.position.x},{connectionPoint.position.y},{connectionPoint.position.z}," +
+					$"{cargoBox.rotation.x},{cargoBox.rotation.y},{cargoBox.rotation.z},{cargoBox.rotation.w}," +
+					$"{cargoVel.x},{cargoVel.y},{cargoVel.z}"
+			);
 		}
 	}
 
-	protected void SendImage(RenderTexture tex) {
-		RenderTexture.active = tex;		                                      
-		myTexture2D.ReadPixels (new Rect (0, 0, tex.width, tex.height), 0, 0, false);
-		byte[] imageBytes = myTexture2D.GetRawTextureData ();
-		server.SendData(monochrome ? 1 : 0);
-        server.SendData(fieldOfView);
-        server.SendData(farClipPlane);
-        server.SendData(tex.width);
-        server.SendData(tex.height);
-    	server.SendData(imageBytes);
-	}
-
-	void Awake () {
-		Initialize();
-	}
-
-	void Update () {
+	void Update()
+	{
 		float time_since_last_image_sent = Time.time - time_last_image_sent;
-		if (time_since_last_image_sent > (1/targetFrameRate - Time.fixedDeltaTime * 0.5f)) {
+		if (time_since_last_image_sent > (1 / targetFrameRate - Time.fixedDeltaTime * 0.5f))
+		{
 			send_image = true;
 			time_last_image_sent = Time.time;
 		}
-	}	
+	}
 }

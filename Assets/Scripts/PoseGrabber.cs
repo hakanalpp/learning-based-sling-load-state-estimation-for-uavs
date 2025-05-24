@@ -59,7 +59,7 @@ public class PoseGrabber : MonoBehaviour {
 			}
 			return pose;
 		} else {
-			Debug.Log ("UDP client not available");
+			// Debug.Log ("UDP client not available");
 			return null;
 		}
 	}
