@@ -29,7 +29,6 @@ class missionNode {
 
   double initial_hover_time;
   double waypoint_hover_time;
-  double waypoint_threshold;
   double cruise_speed;
   double acceleration_limit;
 
@@ -40,6 +39,7 @@ class missionNode {
 
   tf::Transform desired_pose;
   tf::Vector3 current_position;
+  tf::Vector3 current_velocity = tf::Vector3(0, 0, 0);
 
   geometry_msgs::Twist velocity;
   geometry_msgs::Twist acceleration;
@@ -96,74 +96,115 @@ private:
              target.x(), target.y(), target.z());
     
     tf::Vector3 start_position = current_position;
-    double distance = (target - start_position).length();
-    double duration = distance / cruise_speed;
-
-    tf::Vector3 direction = (target - start_position).normalize();
+    tf::Vector3 start_velocity = current_velocity;
     
-    double start_mission_time = missionTime();
-    double progress = 0;
+    double dt = 1.0 / 500.0;  // Based on 500Hz loop rate
     bool reached_flag = false;
-    double hovering_start_time;
-    double previous_speed = 0;
-
-    tf::Quaternion q;
-    q.setRPY(0, 0, atan2(target.y() - start_position.y(), target.x() - start_position.x()));
-    desired_pose.setRotation(q);
-
+    double hovering_start_time = 0;
+    
+    // State variables for smooth trajectory
+    tf::Vector3 desired_position = start_position;
+    tf::Vector3 desired_velocity = start_velocity;
+    
     while (ros::ok()) {
-        double elapsed_time = missionTime() - start_mission_time;
-        progress = elapsed_time / duration;
-
-        if (progress > 1.0) progress = 1.0;
+        // Calculate remaining distance to target
+        tf::Vector3 to_target = target - desired_position;
+        double remaining_distance = to_target.length();
         
-        tf::Vector3 new_position = start_position.lerp(target, progress);
-        desired_pose.setOrigin(new_position);
-
-        double remaining_distance = (target - new_position).length();
-        double dt = 1.0 / 500.0;  // Based on 500Hz loop rate
+        // Define a small threshold for "reached"
+        double reached_threshold = 0.1; // 10cm
         
-        double desired_speed;
-        if (remaining_distance > waypoint_threshold) {
-            double stopping_distance = (previous_speed * previous_speed) / (2 * acceleration_limit);
-            
-            if (remaining_distance > stopping_distance && previous_speed < cruise_speed) {
-                desired_speed = previous_speed + acceleration_limit * dt;
-                if (desired_speed > cruise_speed) desired_speed = cruise_speed;
-            } else if (remaining_distance <= stopping_distance) {
-                desired_speed = previous_speed - acceleration_limit * dt;
-                if (desired_speed < 0) desired_speed = 0;
-            } else {
-                desired_speed = cruise_speed;
-            }
-        } else {
-            desired_speed = 0;
-        }
-        
-        previous_speed = desired_speed;
-
-        velocity.linear.x = direction.x() * desired_speed;
-        velocity.linear.y = direction.y() * desired_speed;
-        velocity.linear.z = direction.z() * desired_speed;
-        
-        acceleration.linear.x = direction.x() * acceleration_limit * (desired_speed > previous_speed ? 1 : -1);
-        acceleration.linear.y = direction.y() * acceleration_limit * (desired_speed > previous_speed ? 1 : -1);
-        acceleration.linear.z = direction.z() * acceleration_limit * (desired_speed > previous_speed ? 1 : -1);
-
-        publish();
-        ros::spinOnce();
-        loop_rate.sleep();
-
-        if (remaining_distance < waypoint_threshold) {
+        if (remaining_distance < reached_threshold) {
+            // We've reached the waypoint
             if (!reached_flag) {
-                ROS_INFO("Reached waypoint %d (error=%.2f)", current_wp_index, remaining_distance);
+                ROS_INFO("Reached waypoint %d", current_wp_index);
                 reached_flag = true;
                 hovering_start_time = missionTime();
             }
+            
+            // Hover at the waypoint
+            desired_position = target;
+            desired_velocity = tf::Vector3(0, 0, 0);
+            
             if (missionTime() - hovering_start_time >= waypoint_hover_time) {
+                // Done hovering, move to next waypoint
+                current_velocity = tf::Vector3(0, 0, 0);
                 break;
             }
+        } else {
+            // Still traveling to waypoint
+            tf::Vector3 direction_to_target = to_target.normalized();
+            
+            // Calculate current speed
+            double current_speed = desired_velocity.length();
+            
+            // Calculate stopping distance: d = v²/(2a)
+            double stopping_distance = (current_speed * current_speed) / (2.0 * acceleration_limit);
+            
+            // Determine desired speed based on remaining distance
+            double desired_speed;
+            if (remaining_distance > stopping_distance) {
+                // Far enough to accelerate or maintain cruise speed
+                desired_speed = cruise_speed;
+            } else {
+                // Need to decelerate - calculate speed for smooth stop
+                // v = sqrt(2 * a * d)
+                desired_speed = std::sqrt(2.0 * acceleration_limit * remaining_distance);
+                desired_speed = std::min(desired_speed, current_speed); // Never accelerate during decel
+            }
+            
+            // Calculate required acceleration to reach desired speed
+            double speed_change = desired_speed - current_speed;
+            double required_accel = speed_change / dt;
+            
+            // Limit acceleration to acceleration_limit
+            double applied_accel;
+            if (std::abs(required_accel) > acceleration_limit) {
+                applied_accel = (required_accel > 0) ? acceleration_limit : -acceleration_limit;
+            } else {
+                applied_accel = required_accel;
+            }
+            
+            // Update speed with limited acceleration
+            double new_speed = current_speed + applied_accel * dt;
+            new_speed = std::max(0.0, std::min(new_speed, cruise_speed));
+            
+            // Update velocity vector
+            desired_velocity = direction_to_target * new_speed;
+            
+            // Calculate actual acceleration vector for output
+            tf::Vector3 accel_vector = direction_to_target * applied_accel;
+            
+            // Update position
+            desired_position += desired_velocity * dt;
+            
+            // Store current velocity for next iteration
+            current_velocity = desired_velocity;
+            
+            // Set acceleration output
+            acceleration.linear.x = accel_vector.x();
+            acceleration.linear.y = accel_vector.y();
+            acceleration.linear.z = accel_vector.z();
+            
+            // Update yaw to point in direction of motion
+            if (new_speed > 0.1) { // Only update yaw if moving
+                tf::Quaternion q;
+                q.setRPY(0, 0, atan2(direction_to_target.y(), direction_to_target.x()));
+                desired_pose.setRotation(q);
+            }
         }
+        
+        // Update desired pose
+        desired_pose.setOrigin(desired_position);
+        
+        // Set velocity output
+        velocity.linear.x = desired_velocity.x();
+        velocity.linear.y = desired_velocity.y();
+        velocity.linear.z = desired_velocity.z();
+        
+        publish();
+        ros::spinOnce();
+        loop_rate.sleep();
     }
   }
 
@@ -171,6 +212,8 @@ private:
     Waypoint wp = waypoints.back();
     tf::Vector3 target = tf::Vector3(wp.x, wp.y, wp.z);
     desired_pose.setOrigin(target);
+    velocity = geometry_msgs::Twist();
+    acceleration = geometry_msgs::Twist();
   }
 
   void reset() {
@@ -218,11 +261,10 @@ private:
       cruise_speed = mission_config["speed"].as<double>(5.0);
       initial_hover_time = mission_config["initial_hover_time"].as<double>(5.0);
       waypoint_hover_time = mission_config["waypoint_hover_time"].as<double>(3.0);
-      waypoint_threshold = mission_config["waypoint_threshold"].as<double>(0.5);
       acceleration_limit = mission_config["acceleration_limit"].as<double>(2.0);
       
-      ROS_INFO("Mission parameters: speed=%.2f, initial_hover=%.2f, wp_hover=%.2f, wp_threshold=%.2f, accel_limit=%.2f",
-               cruise_speed, initial_hover_time, waypoint_hover_time, waypoint_threshold, acceleration_limit);
+      ROS_INFO("Mission parameters: speed=%.2f, initial_hover=%.2f, wp_hover=%.2f, accel_limit=%.2f",
+               cruise_speed, initial_hover_time, waypoint_hover_time, acceleration_limit);
       
       if (mission_config["initial"]) {
         initial_position =

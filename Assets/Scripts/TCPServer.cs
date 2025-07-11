@@ -19,7 +19,7 @@ public class TCPServer : MonoBehaviour
     public Transform ghostBox;
 
     public Transform cargoConnection;
-
+    public Transform drone;
 
     protected string host = "localhost";
     protected int port = 9998;
@@ -384,34 +384,30 @@ public class TCPServer : MonoBehaviour
     {
         // Extract predictions from the LSTM model (11 values total)
         Vector3 directionVector = new Vector3(floatArray[0], floatArray[1], floatArray[2]);
-        directionVector.Normalize(); // Ensure the direction vector is normalized
-        // Note: directionVector is already normalized from the model
-        float distance = floatArray[3];
+        directionVector.Normalize();
+        float predictedDistance = floatArray[3];
         Quaternion cargoRotation = new Quaternion(floatArray[4], floatArray[5], floatArray[6], floatArray[7]);
-        // floatArray[8], floatArray[9], floatArray[10] are velocity (ignored)
 
-        // Adjusted indices for drone state
-        Vector3 dronePosition = new Vector3(floatArray[11], floatArray[12], floatArray[13]);
+        // Vector3 dronePosition = new Vector3(floatArray[11], floatArray[12], floatArray[13]);
         Quaternion droneRotation = new Quaternion(floatArray[14], floatArray[15], floatArray[16], floatArray[17]);
 
-        Vector3 real_vec_world = cargoConnection.position - dronePosition;
-        float real_distance = real_vec_world.magnitude;
-
-        // CORRECT: First rotate the direction to world space, THEN scale by distance
         Vector3 directionInWorld = droneRotation * directionVector;
-        Vector3 vec_world = dronePosition + directionInWorld * distance;
+        directionInWorld.Normalize();
 
-        ghostBox.position = vec_world;
-        ghostBox.rotation = droneRotation * cargoRotation;
+        Quaternion predictedRotation = cargoRotation * droneRotation;
+        Vector3 predictedPosition = drone.position + directionInWorld * predictedDistance;
 
-        Debug.Log("Direction Vector: " + directionVector + " Distance: " + distance + " ghostboxPosition " + vec_world + " dronePosition: " + dronePosition);
+        ghostBox.position = predictedPosition;
+        ghostBox.rotation = predictedRotation;
+
+        // Debug.Log("Direction Vector: " + directionVector + " Distance: " + distance + " ghostboxPosition " + vec_world + " dronePosition: " + dronePosition);
 
 
         // draw debug rays downward of drone
-        Debug.DrawRay(dronePosition, droneRotation * Vector3.down, Color.blue, 0.1f);
+        // Debug.DrawRay(dronePosition, droneRotation * Vector3.down, Color.blue, 0.1f);
 
-        Debug.DrawRay(dronePosition, real_vec_world, Color.green, 0.1f);
-        Debug.DrawRay(dronePosition, directionInWorld * distance, Color.red, 0.1f);
+        // Debug.DrawRay(dronePosition, real_vec_world, Color.green, 0.1f);
+        // Debug.DrawRay(dronePosition, directionInWorld * distance, Color.red, 0.1f);
     }
     void FixedUpdate()
     {

@@ -1,8 +1,7 @@
-speed: 10.0
-initial_hover_time: 5.0
-waypoint_hover_time: 3.0
-waypoint_threshold: 0.5
-acceleration_limit: 1.0
+speed: 12.0
+initial_hover_time: 2.0
+waypoint_hover_time: 1.5
+acceleration_limit: 4.5
 
 initial:
   x: -477
@@ -10,144 +9,252 @@ initial:
   y: 284
 
 waypoints:
-  - { x: -450, z: 40, y: 269 }
-  - { x: -412, z: 45, y: 232 }
-  - { x: -374, z: 36, y: 181 }
-  - { x: -221, z: 16, y: 164 }
-  - { x: -249, z: 17, y: 47 }
-  - { x: -340, z: 43, y: -43 }
-  - { x: -120, z: 40, y: -458 }
-  - { x: 134, z: 30, y: -297 }
-  - { x: 180, z: 54, y: -297 }
-  - { x: 296, z: 84, y: -306 }
-  - { x: 383, z: 58, y: -222 }
-  - { x: 314, z: 38, y: -199 }
-  - { x: 315, z: 62, y: -171 }
-  - { x: 321, z: 25, y: -90 }
-  - { x: 180, z: 26, y: 55 }
-  - { x: 111, z: 33, y: 57 }
-  - { x: 43, z: 27, y: 52 }
-  - { x: -70, z: 13, y: -2 }
-  - { x: -71, z: 12, y: 44 }
-  - { x: -58, z: 13, y: 120 }
-  - { x: -56, z: 13, y: 150 }
-  - { x: -65, z: 13, y: 170 }
-  - { x: -48, z: 27, y: 190 }
-  - { x: -17, z: 54, y: 225 }
-  - { x: -3, z: 60, y: 329 }
-  - { x: -25, z: 58, y: 410 }
-  - { x: 95, z: 57, y: 419 }
-  - { x: 270, z: 81, y: 452 }
-  - { x: 270, z: 66, y: 351 }
-  - { x: 325, z: 35, y: 261 }
-  - { x: 341, z: 30, y: 112 }
-  - { x: 275, z: 27, y: 67 }
-  - { x: 246, z: 11, y: 252 }
-  - { x: 235, z: 20, y: 22 }
-  - { x: 246, z: 20, y: -22 }
-  - { x: 313, z: 24, y: -95 }
-  - { x: 365, z: 40, y: -163 }
-  - { x: 343, z: 50, y: -220 }
-  - { x: 380, z: 59, y: -250 }
-  - { x: 319, z: 59, y: -284 }
-  - { x: 335, z: 99, y: -364 }
-  - { x: 291, z: 104, y: -456 }
-  - { x: 272, z: 153, y: -425 }
-  - { x: 248, z: 125, y: -394 }
-  - { x: 204, z: 67, y: -388 }
-  - { x: 168, z: 28, y: -360 }
-  - { x: 134, z: 21, y: -314 }
-  - { x: 89, z: 22, y: -310 }
-  - { x: 44, z: 39, y: -284 }
-  - { x: 6, z: 26, y: -257 }
-  - { x: -39, z: 15, y: -218 }
-  - { x: -55, z: 27, y: -196 }
-  - { x: -82, z: 17, y: -114 }
-  - { x: -114, z: 12, y: -69 }
-  - { x: -31, z: 10, y: 37 }
-  - { x: -165, z: 9, y: 30 }
-  - { x: -209, z: 12, y: 102 }
-  - { x: -127, z: 119, y: 223 }
-  - { x: -161, z: 69, y: 207 }
-  - { x: -201, z: 26, y: 209 }
-  - { x: -268, z: 26, y: 223 }
-  - { x: -356, z: 29, y: 275 }
-  - { x: -477, z: 33, y: 284 }
-  - { x: -467, z: 37, y: 316 }
-  - { x: -479, z: 38, y: 351 }
-  - { x: -491, z: 44, y: 400 }
-  - { x: -468, z: 42, y: 451 }
-  - { x: -415, z: 59, y: 473 }
-  - { x: -349, z: 83, y: 439 }
-  - { x: -267, z: 75, y: 418 }
-  - { x: -169, z: 57, y: 374 }
-  - { x: -136, z: 66, y: 418 }
-  - { x: -121, z: 66, y: 361 }
-  - { x: -118, z: 59, y: 316 }
-  - { x: -62, z: 71, y: 303 }
-  - { x: -18, z: 62, y: 285 }
-  - { x: 9, z: 56, y: 332 }
-  - { x: -20, z: 64, y: 445 }
-  - { x: 80, z: 58, y: 476 }
-  - { x: 164, z: 56, y: 479 }
-  - { x: 212, z: 69, y: 455 }
-  - { x: 274, z: 96, y: 466 }
-  - { x: 369, z: 79, y: 480 }
-  - { x: 408, z: 107, y: 406 }
-  - { x: 392, z: 77, y: 312 }
-  - { x: 394, z: 54, y: 270 }
-  - { x: 396, z: 41, y: 196 }
-  - { x: 399, z: 38, y: 133 }
-  - { x: 378, z: 30, y: 74 }
-  - { x: 444, z: 38, y: 19 }
-  - { x: 420, z: 40, y: -59 }
-  - { x: 423, z: 47, y: -135 }
-  - { x: 433, z: 67, y: -195 }
-  - { x: 469, z: 62, y: -239 }
-  - { x: 461, z: 71, y: -262 }
-  - { x: 447, z: 93, y: -295 }
-  - { x: 438, z: 111, y: -328 }
-  - { x: 399, z: 132, y: -367 }
-  - { x: 361, z: 108, y: -406 }
-  - { x: 314, z: 100, y: -413 }
-  - { x: 317, z: 85, y: -350 }
-  - { x: 335, z: 74, y: -289 }
-  - { x: 382, z: 67, y: -238 }
-  - { x: 325, z: 44, y: -193 }
-  - { x: 317, z: 41, y: -146 }
-  - { x: 280, z: 16, y: -44 }
-  - { x: 205, z: 16, y: 19 }
-  - { x: 143, z: 25, y: 27 }
-  - { x: 62, z: 20, y: -2 }
-  - { x: -2, z: 25, y: -47 }
-  - { x: -69, z: 16, y: -22 }
-  - { x: -108, z: 18, y: -66 }
-  - { x: -117, z: 16, y: -70 }
-  - { x: -160, z: 11, y: -97 }
-  - { x: -187, z: 11, y: -109 }
-  - { x: -241, z: 16, y: -138 }
-  - { x: -314, z: 19, y: -186 }
-  - { x: -362, z: 22, y: -171 }
-  - { x: -399, z: 31, y: -182 }
-  - { x: -422, z: 44, y: -166 }
-  - { x: -451, z: 52, y: -142 }
-  - { x: -478, z: 67, y: -121 }
-  - { x: -454, z: 61, y: -142 }
-  - { x: -419, z: 41, y: -167 }
-  - { x: -402, z: 37, y: -203 }
-  - { x: -392, z: 38, y: -233 }
-  - { x: -385, z: 43, y: -274 }
-  - { x: -384, z: 40, y: -283 }
-  - { x: -271, z: 30, y: -288 }
-  - { x: -216, z: 23, y: -264 }
-  - { x: -198, z: 20, y: -203 }
-  - { x: -210, z: 14, y: -135 }
-  - { x: -233, z: 11, y: -59 }
-  - { x: -243, z: 10, y: -6 }
-  - { x: -238, z: 8, y: 53 }
-  - { x: -281, z: 15, y: 96 }
-  - { x: -306, z: 24, y: 150 }
-  - { x: -343, z: 28, y: 230 }
-  - { x: -364, z: 31, y: 258 }
-  - { x: -457, z: 36, y: 211 }
-  - { x: -477, z: 33, y: 283 }
+  - { x: -477, z: 33, y: 284 }  # Initial position
+  - { x: -429, z: 43, y: 248 }  # 60.8m from previous
+  - { x: -410, z: 45, y: 230 }  # 26.2m from previous
+  - { x: -380, z: 37, y: 189 }  # 51.4m from previous
+  - { x: -359, z: 34, y: 179 }  # 23.5m from previous
+  - { x: -307, z: 27, y: 173 }  # 52.8m from previous
+  - { x: -281, z: 24, y: 171 }  # 26.2m from previous
+  - { x: -227, z: 17, y: 165 }  # 54.8m from previous
+  - { x: -233, z: 16, y: 113 }  # 52.4m from previous
+  - { x: -244, z: 17, y: 67 }  # 47.3m from previous
+  - { x: -253, z: 18, y: 43 }  # 25.7m from previous
+  - { x: -278, z: 26, y: 18 }  # 36.2m from previous
+  - { x: -326, z: 39, y: -29 }  # 68.4m from previous
+  - { x: -337, z: 43, y: -48 }  # 22.3m from previous
+  - { x: -296, z: 42, y: -125 }  # 87.2m from previous
+  - { x: -284, z: 42, y: -149 }  # 26.8m from previous
+  - { x: -272, z: 42, y: -172 }  # 25.9m from previous
+  - { x: -245, z: 42, y: -223 }  # 57.7m from previous
+  - { x: -232, z: 42, y: -246 }  # 26.4m from previous
+  - { x: -214, z: 41, y: -280 }  # 38.5m from previous
+  - { x: -195, z: 41, y: -316 }  # 40.7m from previous
+  - { x: -183, z: 41, y: -339 }  # 25.9m from previous
+  - { x: -161, z: 40, y: -381 }  # 47.4m from previous
+  - { x: -127, z: 40, y: -445 }  # 72.5m from previous
+  - { x: -72, z: 38, y: -427 }  # 57.9m from previous
+  - { x: -22, z: 36, y: -396 }  # 58.9m from previous
+  - { x: 1, z: 35, y: -382 }  # 26.9m from previous
+  - { x: 23, z: 34, y: -368 }  # 26.1m from previous
+  - { x: 56, z: 33, y: -346 }  # 39.7m from previous
+  - { x: 98, z: 32, y: -320 }  # 49.4m from previous
+  - { x: 139, z: 33, y: -297 }  # 47.0m from previous
+  - { x: 193, z: 57, y: -298 }  # 59.1m from previous
+  - { x: 218, z: 64, y: -300 }  # 26.0m from previous
+  - { x: 266, z: 76, y: -304 }  # 49.6m from previous
+  - { x: 333, z: 73, y: -270 }  # 75.2m from previous
+  - { x: 368, z: 63, y: -236 }  # 49.8m from previous
+  - { x: 378, z: 57, y: -220 }  # 19.8m from previous
+  - { x: 315, z: 51, y: -184 }  # 72.8m from previous
+  - { x: 319, z: 38, y: -116 }  # 69.3m from previous
+  - { x: 321, z: 26, y: -93 }  # 26.0m from previous
+  - { x: 303, z: 25, y: -71 }  # 28.4m from previous
+  - { x: 255, z: 26, y: -23 }  # 67.9m from previous
+  - { x: 237, z: 26, y: -4 }  # 26.2m from previous
+  - { x: 219, z: 26, y: 15 }  # 26.2m from previous
+  - { x: 199, z: 26, y: 36 }  # 29.0m from previous
+  - { x: 157, z: 29, y: 56 }  # 46.6m from previous
+  - { x: 76, z: 30, y: 54 }  # 81.0m from previous
+  - { x: 14, z: 23, y: 38 }  # 64.4m from previous
+  - { x: -10, z: 20, y: 27 }  # 26.6m from previous
+  - { x: -33, z: 18, y: 15 }  # 26.0m from previous
+  - { x: -57, z: 15, y: 4 }  # 26.6m from previous
+  - { x: -70, z: 13, y: 19 }  # 19.9m from previous
+  - { x: -58, z: 13, y: 118 }  # 99.7m from previous
+  - { x: -57, z: 13, y: 153 }  # 35.0m from previous
+  - { x: -44, z: 31, y: 195 }  # 47.5m from previous
+  - { x: -16, z: 54, y: 232 }  # 51.8m from previous
+  - { x: -13, z: 56, y: 258 }  # 26.2m from previous
+  - { x: -9, z: 57, y: 284 }  # 26.3m from previous
+  - { x: -3, z: 60, y: 326 }  # 42.5m from previous
+  - { x: -9, z: 59, y: 351 }  # 25.7m from previous
+  - { x: 4, z: 58, y: 412 }  # 62.4m from previous
+  - { x: 33, z: 58, y: 414 }  # 29.1m from previous
+  - { x: 59, z: 57, y: 416 }  # 26.1m from previous
+  - { x: 118, z: 60, y: 423 }  # 59.5m from previous
+  - { x: 164, z: 66, y: 432 }  # 47.3m from previous
+  - { x: 262, z: 80, y: 450 }  # 100.6m from previous
+  - { x: 270, z: 77, y: 424 }  # 27.4m from previous
+  - { x: 270, z: 73, y: 398 }  # 26.3m from previous
+  - { x: 279, z: 61, y: 336 }  # 63.8m from previous
+  - { x: 292, z: 53, y: 315 }  # 26.0m from previous
+  - { x: 326, z: 35, y: 254 }  # 72.1m from previous
+  - { x: 330, z: 33, y: 211 }  # 43.2m from previous
+  - { x: 339, z: 31, y: 129 }  # 82.5m from previous
+  - { x: 334, z: 30, y: 107 }  # 22.6m from previous
+  - { x: 312, z: 28, y: 92 }  # 26.7m from previous
+  - { x: 290, z: 27, y: 78 }  # 26.1m from previous
+  - { x: 274, z: 26, y: 75 }  # 16.3m from previous
+  - { x: 265, z: 22, y: 128 }  # 53.9m from previous
+  - { x: 261, z: 20, y: 154 }  # 26.4m from previous
+  - { x: 245, z: 12, y: 231 }  # 79.1m from previous
+  - { x: 241, z: 15, y: 164 }  # 67.2m from previous
+  - { x: 238, z: 18, y: 86 }  # 78.1m from previous
+  - { x: 236, z: 20, y: 18 }  # 68.1m from previous
+  - { x: 242, z: 20, y: -8 }  # 26.7m from previous
+  - { x: 312, z: 24, y: -94 }  # 111.0m from previous
+  - { x: 336, z: 31, y: -125 }  # 39.8m from previous
+  - { x: 352, z: 36, y: -146 }  # 26.9m from previous
+  - { x: 364, z: 41, y: -167 }  # 24.7m from previous
+  - { x: 354, z: 45, y: -191 }  # 26.3m from previous
+  - { x: 352, z: 52, y: -227 }  # 36.7m from previous
+  - { x: 372, z: 57, y: -243 }  # 26.1m from previous
+  - { x: 365, z: 59, y: -259 }  # 17.6m from previous
+  - { x: 332, z: 59, y: -277 }  # 37.6m from previous
+  - { x: 321, z: 64, y: -294 }  # 20.9m from previous
+  - { x: 327, z: 79, y: -324 }  # 34.1m from previous
+  - { x: 334, z: 95, y: -357 }  # 37.3m from previous
+  - { x: 327, z: 100, y: -380 }  # 24.6m from previous
+  - { x: 305, z: 103, y: -427 }  # 52.0m from previous
+  - { x: 294, z: 104, y: -450 }  # 25.5m from previous
+  - { x: 278, z: 138, y: -434 }  # 40.8m from previous
+  - { x: 260, z: 139, y: -409 }  # 30.8m from previous
+  - { x: 228, z: 98, y: -391 }  # 55.0m from previous
+  - { x: 172, z: 32, y: -363 }  # 91.0m from previous
+  - { x: 157, z: 26, y: -345 }  # 24.2m from previous
+  - { x: 134, z: 21, y: -314 }  # 38.9m from previous
+  - { x: 84, z: 24, y: -307 }  # 50.6m from previous
+  - { x: 23, z: 32, y: -269 }  # 72.3m from previous
+  - { x: 2, z: 25, y: -254 }  # 26.7m from previous
+  - { x: -21, z: 19, y: -234 }  # 31.1m from previous
+  - { x: -50, z: 23, y: -203 }  # 42.6m from previous
+  - { x: -77, z: 19, y: -130 }  # 77.9m from previous
+  - { x: -92, z: 11, y: -41 }  # 90.6m from previous
+  - { x: -76, z: 11, y: -21 }  # 25.6m from previous
+  - { x: -32, z: 10, y: 37 }  # 72.8m from previous
+  - { x: -111, z: 9, y: 33 }  # 79.1m from previous
+  - { x: -180, z: 10, y: 55 }  # 72.4m from previous
+  - { x: -199, z: 11, y: 86 }  # 36.4m from previous
+  - { x: -198, z: 26, y: 117 }  # 34.5m from previous
+  - { x: -176, z: 55, y: 150 }  # 49.1m from previous
+  - { x: -160, z: 76, y: 174 }  # 35.7m from previous
+  - { x: -148, z: 91, y: 192 }  # 26.3m from previous
+  - { x: -136, z: 107, y: 210 }  # 26.9m from previous
+  - { x: -153, z: 80, y: 211 }  # 31.9m from previous
+  - { x: -169, z: 60, y: 207 }  # 25.9m from previous
+  - { x: -187, z: 41, y: 208 }  # 26.2m from previous
+  - { x: -215, z: 26, y: 212 }  # 32.0m from previous
+  - { x: -241, z: 26, y: 218 }  # 26.7m from previous
+  - { x: -291, z: 27, y: 237 }  # 53.5m from previous
+  - { x: -322, z: 28, y: 255 }  # 35.9m from previous
+  - { x: -352, z: 29, y: 273 }  # 35.0m from previous
+  - { x: -423, z: 31, y: 280 }  # 71.4m from previous
+  - { x: -449, z: 32, y: 282 }  # 26.1m from previous
+  - { x: -476, z: 33, y: 286 }  # 27.3m from previous
+  - { x: -469, z: 36, y: 311 }  # 26.1m from previous
+  - { x: -476, z: 38, y: 343 }  # 32.8m from previous
+  - { x: -490, z: 43, y: 396 }  # 55.0m from previous
+  - { x: -460, z: 45, y: 455 }  # 66.2m from previous
+  - { x: -411, z: 60, y: 471 }  # 53.7m from previous
+  - { x: -360, z: 79, y: 445 }  # 60.3m from previous
+  - { x: -326, z: 81, y: 433 }  # 36.1m from previous
+  - { x: -286, z: 77, y: 423 }  # 41.4m from previous
+  - { x: -261, z: 74, y: 415 }  # 26.4m from previous
+  - { x: -237, z: 70, y: 405 }  # 26.3m from previous
+  - { x: -195, z: 62, y: 386 }  # 46.8m from previous
+  - { x: -158, z: 60, y: 389 }  # 37.2m from previous
+  - { x: -142, z: 64, y: 410 }  # 26.7m from previous
+  - { x: -132, z: 66, y: 402 }  # 13.0m from previous
+  - { x: -120, z: 63, y: 342 }  # 61.3m from previous
+  - { x: -81, z: 67, y: 307 }  # 52.6m from previous
+  - { x: -39, z: 66, y: 293 }  # 44.3m from previous
+  - { x: -16, z: 62, y: 288 }  # 23.9m from previous
+  - { x: -3, z: 59, y: 311 }  # 26.6m from previous
+  - { x: 8, z: 56, y: 337 }  # 28.4m from previous
+  - { x: 1, z: 58, y: 363 }  # 27.0m from previous
+  - { x: -17, z: 63, y: 432 }  # 71.5m from previous
+  - { x: 60, z: 59, y: 469 }  # 85.5m from previous
+  - { x: 130, z: 57, y: 478 }  # 70.6m from previous
+  - { x: 204, z: 67, y: 459 }  # 77.1m from previous
+  - { x: 269, z: 94, y: 465 }  # 70.6m from previous
+  - { x: 307, z: 90, y: 471 }  # 38.7m from previous
+  - { x: 346, z: 83, y: 477 }  # 40.1m from previous
+  - { x: 370, z: 80, y: 478 }  # 24.2m from previous
+  - { x: 381, z: 88, y: 456 }  # 25.9m from previous
+  - { x: 401, z: 102, y: 418 }  # 45.2m from previous
+  - { x: 406, z: 104, y: 395 }  # 23.6m from previous
+  - { x: 402, z: 96, y: 371 }  # 25.6m from previous
+  - { x: 398, z: 88, y: 346 }  # 26.6m from previous
+  - { x: 393, z: 69, y: 298 }  # 51.9m from previous
+  - { x: 394, z: 57, y: 275 }  # 26.0m from previous
+  - { x: 395, z: 48, y: 231 }  # 44.9m from previous
+  - { x: 396, z: 41, y: 188 }  # 43.6m from previous
+  - { x: 398, z: 39, y: 154 }  # 34.1m from previous
+  - { x: 394, z: 36, y: 119 }  # 35.4m from previous
+  - { x: 385, z: 33, y: 95 }  # 25.8m from previous
+  - { x: 396, z: 32, y: 59 }  # 37.7m from previous
+  - { x: 436, z: 37, y: 26 }  # 52.1m from previous
+  - { x: 431, z: 39, y: -23 }  # 49.3m from previous
+  - { x: 424, z: 40, y: -48 }  # 26.0m from previous
+  - { x: 421, z: 41, y: -73 }  # 25.2m from previous
+  - { x: 423, z: 46, y: -125 }  # 52.3m from previous
+  - { x: 426, z: 52, y: -150 }  # 25.9m from previous
+  - { x: 431, z: 63, y: -184 }  # 36.1m from previous
+  - { x: 453, z: 64, y: -219 }  # 41.4m from previous
+  - { x: 468, z: 63, y: -241 }  # 26.6m from previous
+  - { x: 460, z: 72, y: -264 }  # 26.0m from previous
+  - { x: 432, z: 114, y: -334 }  # 86.3m from previous
+  - { x: 402, z: 130, y: -364 }  # 45.3m from previous
+  - { x: 385, z: 123, y: -381 }  # 25.0m from previous
+  - { x: 369, z: 113, y: -398 }  # 25.4m from previous
+  - { x: 327, z: 102, y: -411 }  # 45.3m from previous
+  - { x: 316, z: 93, y: -386 }  # 28.8m from previous
+  - { x: 317, z: 87, y: -360 }  # 26.7m from previous
+  - { x: 321, z: 83, y: -335 }  # 25.6m from previous
+  - { x: 329, z: 78, y: -310 }  # 26.7m from previous
+  - { x: 337, z: 74, y: -286 }  # 25.6m from previous
+  - { x: 360, z: 70, y: -262 }  # 33.5m from previous
+  - { x: 376, z: 65, y: -233 }  # 33.5m from previous
+  - { x: 327, z: 45, y: -194 }  # 65.7m from previous
+  - { x: 321, z: 43, y: -170 }  # 24.8m from previous
+  - { x: 316, z: 41, y: -144 }  # 26.6m from previous
+  - { x: 295, z: 26, y: -87 }  # 62.6m from previous
+  - { x: 280, z: 16, y: -45 }  # 45.7m from previous
+  - { x: 261, z: 16, y: -28 }  # 25.5m from previous
+  - { x: 199, z: 17, y: 20 }  # 78.4m from previous
+  - { x: 150, z: 24, y: 26 }  # 49.9m from previous
+  - { x: 125, z: 24, y: 20 }  # 25.7m from previous
+  - { x: 80, z: 21, y: 4 }  # 47.9m from previous
+  - { x: 18, z: 23, y: -32 }  # 71.7m from previous
+  - { x: -3, z: 25, y: -47 }  # 25.9m from previous
+  - { x: -54, z: 18, y: -27 }  # 55.2m from previous
+  - { x: -87, z: 17, y: -43 }  # 36.7m from previous
+  - { x: -105, z: 18, y: -62 }  # 26.2m from previous
+  - { x: -126, z: 15, y: -76 }  # 25.4m from previous
+  - { x: -148, z: 12, y: -90 }  # 26.2m from previous
+  - { x: -183, z: 11, y: -107 }  # 38.9m from previous
+  - { x: -216, z: 14, y: -125 }  # 37.7m from previous
+  - { x: -244, z: 16, y: -140 }  # 31.8m from previous
+  - { x: -266, z: 17, y: -154 }  # 26.1m from previous
+  - { x: -290, z: 18, y: -170 }  # 28.9m from previous
+  - { x: -312, z: 19, y: -185 }  # 26.6m from previous
+  - { x: -389, z: 29, y: -179 }  # 77.9m from previous
+  - { x: -438, z: 48, y: -153 }  # 58.6m from previous
+  - { x: -457, z: 55, y: -137 }  # 25.8m from previous
+  - { x: -476, z: 66, y: -123 }  # 26.0m from previous
+  - { x: -461, z: 63, y: -136 }  # 20.1m from previous
+  - { x: -432, z: 48, y: -158 }  # 39.4m from previous
+  - { x: -401, z: 37, y: -205 }  # 57.4m from previous
+  - { x: -392, z: 38, y: -233 }  # 29.4m from previous
+  - { x: -384, z: 41, y: -279 }  # 46.8m from previous
+  - { x: -312, z: 34, y: -287 }  # 72.8m from previous
+  - { x: -275, z: 30, y: -288 }  # 37.2m from previous
+  - { x: -221, z: 24, y: -266 }  # 58.6m from previous
+  - { x: -210, z: 22, y: -244 }  # 24.7m from previous
+  - { x: -203, z: 17, y: -175 }  # 69.5m from previous
+  - { x: -209, z: 15, y: -141 }  # 34.6m from previous
+  - { x: -217, z: 13, y: -112 }  # 30.1m from previous
+  - { x: -228, z: 11, y: -76 }  # 37.7m from previous
+  - { x: -239, z: 10, y: -25 }  # 52.2m from previous
+  - { x: -242, z: 10, y: 7 }  # 32.1m from previous
+  - { x: -240, z: 8, y: 55 }  # 48.1m from previous
+  - { x: -259, z: 12, y: 73 }  # 26.5m from previous
+  - { x: -290, z: 18, y: 114 }  # 51.7m from previous
+  - { x: -319, z: 25, y: 180 }  # 72.4m from previous
+  - { x: -330, z: 27, y: 203 }  # 25.6m from previous
+  - { x: -342, z: 28, y: 227 }  # 26.9m from previous
+  - { x: -393, z: 33, y: 243 }  # 53.7m from previous
+  - { x: -417, z: 34, y: 231 }  # 26.9m from previous
+  - { x: -440, z: 35, y: 219 }  # 26.0m from previous
+  - { x: -470, z: 34, y: 259 }  # 50.0m from previous

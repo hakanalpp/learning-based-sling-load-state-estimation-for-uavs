@@ -73,3 +73,8 @@ lightning_logs
 data
 tb_logs
 *.ckpt
+csv_comparison
+analysis
+irl_data_recording
+venv
+data_visualization

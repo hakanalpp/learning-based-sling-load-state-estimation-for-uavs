@@ -17,17 +17,12 @@ public class RGBCamera : ICommandable
 	Rigidbody rb;
 
 	public Transform connectionPoint;
-
 	public int width = 224;
 	public int height = 224;
 	public float fieldOfView = 90.0f;
 	public float farClipPlane = 65.535f;
-	public float targetFrameRate = 60.0f;
 	public bool monochrome = false;
-	float time_last_image_sent = 0.0f;
-	protected bool send_image = false;
 	protected RenderTextureReadWrite render_texture_read_write = RenderTextureReadWrite.Default;
-
 	public string folderPath = "/home/alp/noetic_ws/src/simulation/images";      // root folder
 	public string csvFileName = "cargo_data.csv";
 	private string csvPath;
@@ -37,6 +32,7 @@ public class RGBCamera : ICommandable
 	void Awake()
 	{
 		Initialize();
+
 		if (recording)
 		{
 			Directory.CreateDirectory(folderPath);
@@ -49,18 +45,16 @@ public class RGBCamera : ICommandable
 			csvPath = Path.Combine(runFolderPath, csvFileName);
 			if (!File.Exists(csvPath))
 			{
-				using (StreamWriter sw = File.CreateText(csvPath))
-				{
-					sw.WriteLine(
-							"frameId,drone_pos_x,drone_pos_y,drone_pos_z," +
-							"drone_rot_x,drone_rot_y,drone_rot_z,drone_rot_w," +
-							"drone_vel_x,drone_vel_y,drone_vel_z," +
-							"cargo_pos_x,cargo_pos_y,cargo_pos_z," +
-							"cargo_rot_x,cargo_rot_y,cargo_rot_z,cargo_rot_w," +
-							"cargo_vel_x,cargo_vel_y,cargo_vel_z"
-					);
-				}
-			}
+                using StreamWriter sw = File.CreateText(csvPath);
+                sw.WriteLine(
+                    "frameId,drone_pos_x,drone_pos_y,drone_pos_z," +
+                    "camera_rot_x,camera_rot_y,camera_rot_z," +
+                    "drone_vel_x,drone_vel_y,drone_vel_z," +
+                    "cargo_pos_x,cargo_pos_y,cargo_pos_z," +
+                    "cargo_rot_x,cargo_rot_y,cargo_rot_z," +
+                    "cargo_vel_x,cargo_vel_y,cargo_vel_z"
+                );
+            }
 		}
 	}
 
@@ -75,10 +69,7 @@ public class RGBCamera : ICommandable
 		cameraImage = new RenderTexture(width, height, 24, RenderTextureFormat.DefaultHDR, render_texture_read_write);
 		outputImage = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32, render_texture_read_write);
 
-		if (camera == null)
-		{
-			camera = GetComponent<Camera>();
-		}
+		camera ??= GetComponent<Camera>();
 		camera.farClipPlane = farClipPlane;
 		camera.fieldOfView = fieldOfView;
 		camera.depthTextureMode = DepthTextureMode.Depth;
@@ -87,27 +78,22 @@ public class RGBCamera : ICommandable
 		myTexture2D = new Texture2D(cameraImage.width, cameraImage.height, TextureFormat.RGB24, false);
 	}
 
-
 	void OnRenderImage(RenderTexture src, RenderTexture dest)
 	{
 		Graphics.Blit(src, outputImage);
 
-		if (recording)
-		{
-			long frameId = time_server.GetFrameTicks();
-			SaveImageLocally(outputImage, frameId);
-			LogCargoPoseCSV(frameId);
-		}
+        LogCargoPoseCSV();
+        SaveImageLocally(outputImage);
 
-		if (send_image && send_image_to_ros)
+		if (send_image_to_ros)
 		{
-			server.SendHeader(1, full_name, time_server.GetFrameTicks());
+			server.SendHeader(1, full_name, time_server.GetTimeNow());
 			SendImageToRos(outputImage);
-			send_image = false;
 		}
 
-		SendImageToAI(outputImage);
+		// SendImageToAI(outputImage);
 	}
+
 	protected void SendImageToAI(RenderTexture tex)
 	{
 		RenderTexture.active = tex;
@@ -120,28 +106,25 @@ public class RGBCamera : ICommandable
 		Vector3 normalized_vec_local = vec_local / distance;
 
 		Rigidbody cargoRb = cargoBox.GetComponent<Rigidbody>();
-		Vector3 cargoVelocity = cargoRb != null ? cargoRb.velocity : Vector3.zero;
+		Vector3 cargoVelocity = cargoRb.velocity;
 
-		float[] label = new float[11];
+		// float[] label = [
+        //     normalized_vec_local.x,
+        //     normalized_vec_local.y,
+        //     normalized_vec_local.z,
+        //     distance,
+        //     cargoBox.rotation.x,
+        //     cargoBox.rotation.x,
+        //     cargoBox.rotation.y,
+        //     cargoBox.rotation.w,
+        //     cargoVelocity.x,
+        //     cargoVelocity.y,
+        //     cargoVelocity.z,
+        // ];
 
-		label[0] = normalized_vec_local.x;
-		label[1] = normalized_vec_local.y;
-		label[2] = normalized_vec_local.z;
-
-		label[3] = distance;
-
-		label[4] = cargoBox.rotation.x;
-		label[5] = cargoBox.rotation.x;
-		label[6] = cargoBox.rotation.y;
-		label[7] = cargoBox.rotation.w;
-
-		// Velocity (cargoBox velocity)
-		label[8] = cargoVelocity.x;
-		label[9] = cargoVelocity.y;
-		label[10] = cargoVelocity.z;
-
-		server.SendDataToAI(imageBytes, rb.position, rb.rotation, label);
+        // server.SendDataToAI(imageBytes, rb.position, rb.rotation, label);
 	}
+
 	protected void SendImageToRos(RenderTexture tex)
 	{
 		RenderTexture.active = tex;
@@ -155,41 +138,32 @@ public class RGBCamera : ICommandable
 		server.SendData(imageBytes);
 	}
 
-	void SaveImageLocally(RenderTexture tex, long frameId)
+	void SaveImageLocally(RenderTexture tex)
 	{
 		RenderTexture.active = tex;
 		myTexture2D.ReadPixels(new Rect(0, 0, tex.width, tex.height), 0, 0, false);
 		myTexture2D.Apply();
 
 		byte[] bytes = myTexture2D.EncodeToJPG();
-		string fname = $"{frameId}.jpg";
+		string fname = $"{time_server.GetTimeNow()}.jpg";
 		File.WriteAllBytes(Path.Combine(runFolderPath, fname), bytes);
 	}
 
-	void LogCargoPoseCSV(long frameId)
+	void LogCargoPoseCSV()
 	{
-		using (StreamWriter sw = File.AppendText(csvPath))
-		{
-			Vector3 cargoVel = cargoBox.GetComponent<Rigidbody>().velocity;
+        using StreamWriter sw = File.AppendText(csvPath);
+        Vector3 cargoVel = cargoBox.GetComponent<Rigidbody>().velocity;
 
-			sw.WriteLine(
-					$"{frameId},{rb.position.x},{rb.position.y},{rb.position.z}," +
-					$"{rb.rotation.x},{rb.rotation.y},{rb.rotation.z},{rb.rotation.w}," +
-					$"{rb.velocity.x},{rb.velocity.y},{rb.velocity.z}," +
-					$"{connectionPoint.position.x},{connectionPoint.position.y},{connectionPoint.position.z}," +
-					$"{cargoBox.rotation.x},{cargoBox.rotation.y},{cargoBox.rotation.z},{cargoBox.rotation.w}," +
-					$"{cargoVel.x},{cargoVel.y},{cargoVel.z}"
-			);
-		}
-	}
+        Vector3 cargoRotation = cargoBox.eulerAngles;
+        Vector3 cameraRotation = camera.transform.eulerAngles;
 
-	void Update()
-	{
-		float time_since_last_image_sent = Time.time - time_last_image_sent;
-		if (time_since_last_image_sent > (1 / targetFrameRate - Time.fixedDeltaTime * 0.5f))
-		{
-			send_image = true;
-			time_last_image_sent = Time.time;
-		}
-	}
+        sw.WriteLine(
+                $"{time_server.GetTimeNow()},{rb.position.x},{rb.position.y},{rb.position.z}," +
+                $"{cameraRotation.x},{cameraRotation.y},{cameraRotation.z}," +
+                $"{rb.velocity.x},{rb.velocity.y},{rb.velocity.z}," +
+                $"{connectionPoint.position.x},{connectionPoint.position.y},{connectionPoint.position.z}," +
+                $"{cargoRotation.x},{cargoRotation.y},{cargoRotation.z}," +
+                $"{cargoVel.x},{cargoVel.y},{cargoVel.z}"
+        );
+    }
 }
