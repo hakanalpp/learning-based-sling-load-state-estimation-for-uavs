@@ -195,18 +195,18 @@ def match_images_to_csv(csv_file_path, images_directory, threshold_ms=1, dry_run
 # Example usage
 if __name__ == "__main__":
     # Update these paths according to your setup
-    csv_file = "/home/alp/noetic_ws/src/simulation/images/run_10/cargo_data.csv"  # Path to your CSV file
-    images_dir = "/home/alp/noetic_ws/src/simulation/images/run_10"  # Directory containing images
+    csv_file = "/home/alp/noetic_ws/src/simulation/images/run_1/cargo_data.csv"  # Path to your CSV file
+    images_dir = "/home/alp/noetic_ws/src/simulation/images/run_1"  # Directory containing images
     
     # First run with dry_run=True to see what would happen
     print("Running dry run to preview changes...")
-    match_images_to_csv(csv_file, images_dir, threshold_ms=3, dry_run=True)
+    match_images_to_csv(csv_file, images_dir, threshold_ms=20, dry_run=True)
     
     # Ask user for confirmation
     user_input = input("\nDo you want to proceed with these changes? (y/N): ")
     
     if user_input.lower() in ['y', 'yes']:
         print("\nRunning actual operations...")
-        match_images_to_csv(csv_file, images_dir, threshold_ms=3, dry_run=False)
+        match_images_to_csv(csv_file, images_dir, threshold_ms=20, dry_run=False)
     else:
         print("Operation cancelled.")

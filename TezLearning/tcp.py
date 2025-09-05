@@ -76,29 +76,23 @@ class TCPHandler:
         )
         return img
 
-    def _receive_pose_and_label(self, sock: socket.socket) -> tuple[List[float], List[float], List[float]]:
+    def _receive_label(self, sock: socket.socket) -> tuple[List[float], List[float], List[float]]:
         try:
-            pose_data = self._receive_data(sock, 28)
-            label_data = self._receive_data(sock, 44)
+            label_data = self._receive_data(sock, 32)
         except Exception as e:
             print(f"Error receiving pose and label data: {e}")
             return None
 
-        position_data = pose_data[:12]
-        x, y, z = struct.unpack("<3f", position_data)
-        
-        rotation_data = pose_data[12:]
-        qx, qy, qz, qw = struct.unpack("<4f", rotation_data)
-        label = list(struct.unpack("<11f", label_data))
+        label = list(struct.unpack("<8f", label_data))
     
-        return [x, y, z], [qx, qy, qz, qw], label
+        return label
     
     def _handle_client(self, conn: socket.socket, callback: Callable) -> None:
         while not self.stop_thread.is_set():
             image = self._receive_image(conn)
-            position, rotation, label= self._receive_pose_and_label(conn)
+            label = self._receive_label(conn)
 
-            callback(image, position, rotation, label)
+            callback(image, label)
 
     def start_receiver(self, callback: Callable) -> None:
         self.receiver_thread = threading.Thread(
@@ -107,16 +101,12 @@ class TCPHandler:
         self.receiver_thread.daemon = True
         self.receiver_thread.start()
 
-    def send_floats(
-        self, values: List[float], position: List[float], rotation: List[float]
-    ) -> None:
+    def send_floats(self, values: List[float]) -> None:
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((self.data_host, self.data_port))
             all_values = values.copy()
-            all_values.extend(position)
-            all_values.extend(rotation)
-            packed_data = struct.pack("<18f", *all_values)
+            packed_data = struct.pack("<8f", *all_values)
             sock.sendall(packed_data)
             sock.close()
         except Exception as e:

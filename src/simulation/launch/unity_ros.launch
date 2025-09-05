@@ -21,6 +21,6 @@
     <remap from="~Quadrotor/Sensors/RGBCameraRight/camera_info" to="$(arg right_info_topic)" />
     <remap from="~Quadrotor/IMU" to="$(arg imu_topic)" />
   </node>
-  
 
+  <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find simulation)/rviz/sim_config.rviz" /> -->
 </launch>

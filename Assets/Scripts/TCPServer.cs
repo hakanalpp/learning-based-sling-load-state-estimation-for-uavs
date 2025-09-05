@@ -21,6 +21,8 @@ public class TCPServer : MonoBehaviour
     public Transform cargoConnection;
     public Transform drone;
 
+    public Transform camera;
+
     protected string host = "localhost";
     protected int port = 9998;
     protected int portAI = 10001;
@@ -77,10 +79,10 @@ public class TCPServer : MonoBehaviour
                         using (NetworkStream stream = dataClient.GetStream())
                         {
                             int bytesRead;
-                            while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) == 72) // Ensure we read all 60 bytes
+                            while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) == 32) // Ensure we read all 32 bytes
                             {
-                                float[] floatArray = new float[18];
-                                for (int i = 0; i < 18; i++)
+                                float[] floatArray = new float[8];
+                                for (int i = 0; i < 8; i++)
                                 {
                                     floatArray[i] = BitConverter.ToSingle(buffer, i * 4);
                                 }
@@ -243,30 +245,16 @@ public class TCPServer : MonoBehaviour
         SendData(BitConverter.GetBytes(data));
     }
 
-    public void SendDataToAI(byte[] data, Vector3 position, Quaternion rotation, float[] label)
+    public void SendDataToAI(byte[] data, float[] label)
     {
         if (clientAI == null || !clientAI.Connected)
             return;
         try
         {
-            byte[] positionBytes = new byte[12];
-            byte[] rotationBytes = new byte[16];
-
-            Buffer.BlockCopy(BitConverter.GetBytes(position.x), 0, positionBytes, 0, 4);
-            Buffer.BlockCopy(BitConverter.GetBytes(position.y), 0, positionBytes, 4, 4);
-            Buffer.BlockCopy(BitConverter.GetBytes(position.z), 0, positionBytes, 8, 4);
-
-            Buffer.BlockCopy(BitConverter.GetBytes(rotation.x), 0, rotationBytes, 0, 4);
-            Buffer.BlockCopy(BitConverter.GetBytes(rotation.y), 0, rotationBytes, 4, 4);
-            Buffer.BlockCopy(BitConverter.GetBytes(rotation.z), 0, rotationBytes, 8, 4);
-            Buffer.BlockCopy(BitConverter.GetBytes(rotation.w), 0, rotationBytes, 12, 4);
-
             streamAI.Write(data, 0, data.Length);
 
-            streamAI.Write(positionBytes, 0, positionBytes.Length);
-            streamAI.Write(rotationBytes, 0, rotationBytes.Length);
-
             byte[] labelByteArray = new byte[label.Length * 4];
+
             Buffer.BlockCopy(label, 0, labelByteArray, 0, labelByteArray.Length);
 
             streamAI.Write(labelByteArray, 0, labelByteArray.Length);
@@ -314,19 +302,16 @@ public class TCPServer : MonoBehaviour
             {
                 using (connectedTcpClient = tcpListener.AcceptTcpClient())
                 {
-                    // Debug.Log("Command client connected");
-                    using (NetworkStream stream = connectedTcpClient.GetStream())
+                    using NetworkStream stream = connectedTcpClient.GetStream();
+                    int length;
+                    while ((length = stream.Read(bytes, 0, bytes.Length)) != 0)
                     {
-                        int length;
-                        while ((length = stream.Read(bytes, 0, bytes.Length)) != 0)
+                        byte[] incomingData = new byte[length];
+                        Array.Copy(bytes, 0, incomingData, 0, length);
+                        string clientMessage = Encoding.ASCII.GetString(incomingData);
+                        lock (syncLock)
                         {
-                            byte[] incomingData = new byte[length];
-                            Array.Copy(bytes, 0, incomingData, 0, length);
-                            string clientMessage = Encoding.ASCII.GetString(incomingData);
-                            lock (syncLock)
-                            {
-                                messageQueue.Enqueue(clientMessage);
-                            }
+                            messageQueue.Enqueue(clientMessage);
                         }
                     }
                 }
@@ -382,33 +367,19 @@ public class TCPServer : MonoBehaviour
 
     void ModifyGhostBox(float[] floatArray)
     {
-        // Extract predictions from the LSTM model (11 values total)
         Vector3 directionVector = new Vector3(floatArray[0], floatArray[1], floatArray[2]);
         directionVector.Normalize();
         float predictedDistance = floatArray[3];
         Quaternion cargoRotation = new Quaternion(floatArray[4], floatArray[5], floatArray[6], floatArray[7]);
 
-        // Vector3 dronePosition = new Vector3(floatArray[11], floatArray[12], floatArray[13]);
-        Quaternion droneRotation = new Quaternion(floatArray[14], floatArray[15], floatArray[16], floatArray[17]);
-
-        Vector3 directionInWorld = droneRotation * directionVector;
+        Vector3 directionInWorld = camera.rotation * directionVector;
         directionInWorld.Normalize();
+        Quaternion predictedRotation = camera.rotation * cargoRotation;
 
-        Quaternion predictedRotation = cargoRotation * droneRotation;
         Vector3 predictedPosition = drone.position + directionInWorld * predictedDistance;
 
-        ghostBox.position = predictedPosition;
-        ghostBox.rotation = predictedRotation;
-
-        // Debug.Log("Direction Vector: " + directionVector + " Distance: " + distance + " ghostboxPosition " + vec_world + " dronePosition: " + dronePosition);
-
-
-        // draw debug rays downward of drone
-        // Debug.DrawRay(dronePosition, droneRotation * Vector3.down, Color.blue, 0.1f);
-
-        // Debug.DrawRay(dronePosition, real_vec_world, Color.green, 0.1f);
-        // Debug.DrawRay(dronePosition, directionInWorld * distance, Color.red, 0.1f);
     }
+
     void FixedUpdate()
     {
         ProcessMessages();

@@ -78,3 +78,7 @@ analysis
 irl_data_recording
 venv
 data_visualization
+prediction_visualization
+bullshit-models
+*.png
+experiments
